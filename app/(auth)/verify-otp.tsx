@@ -181,7 +181,7 @@ const VerifyOTP = () => {
         otp: otpCode,
         newPassword,
       });
-      router.replace('/(auth)/signin');
+      router.replace('/(auth)/signin-merchant');
     } catch (error) {
       console.error('Error resetting password:', error);
       setError('Mã OTP không hợp lệ. Vui lòng nhập lại.');

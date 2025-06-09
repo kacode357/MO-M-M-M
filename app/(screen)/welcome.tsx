@@ -1,4 +1,4 @@
-import logo from '@/assets/images/logo-mm-final-2.png';
+import logo from '@/assets/images/logo-merchant.png';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -7,7 +7,8 @@ import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Fallback version if EXPO_PUBLIC_APP_VERSION is not defined
-const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION
+const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0';
+
 const WelcomePage = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
@@ -18,63 +19,61 @@ const WelcomePage = () => {
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 20,
-      paddingVertical: 30, // Increased for better spacing
+      paddingVertical: 30,
       backgroundColor: Colors[colorScheme].background,
     },
     textContainer: {
-      alignItems: 'flex-start',
+      alignItems: 'center', // Center text for professional look
       width: '100%',
-      marginTop: 40, // Lower the title and subtitle
+      marginTop: 20,
     },
     title: {
       fontFamily: Fonts.Baloo2.ExtraBold,
-      fontSize: 60, // Reduced from 53
-      lineHeight: 55 * 1.3, // Adjusted
-      letterSpacing: -0.02 * 36, // Adjusted
+      fontSize: 40, // Smaller for cleaner look
+      lineHeight: 48,
       color: Colors[colorScheme].primaryText,
-      textAlign: 'left',
-      marginBottom: 12, // Adjusted for spacing
+      textAlign: 'center',
+      marginBottom: 10,
     },
     subtitle: {
-      fontFamily: Fonts.Baloo2.Bold,
-      fontSize: 25, // Reduced from 32
-      lineHeight: 28, // Adjusted
-      letterSpacing: -0.02 * 24, // Adjusted
+      fontFamily: Fonts.Comfortaa.Regular,
+      fontSize: 18, // Smaller for readability
+      lineHeight: 24,
       color: Colors[colorScheme].primaryText,
-      textAlign: 'left',
-      marginBottom: 24, // Adjusted
+      textAlign: 'center',
+      marginBottom: 20,
     },
     highlightedText: {
+      fontFamily: Fonts.Comfortaa.Bold,
       color: Colors[colorScheme].tabIconSelected,
     },
     logo: {
-      width: 250, // Reduced for proportionality
-      height: 250, // Adjusted
+      width: 200, // Slightly smaller for balance
+      height: 200,
       resizeMode: 'contain',
-    
+      marginVertical: 20,
     },
     loginButton: {
-      width: 250, // Aligned with other components
-      height: 50, // Increased for consistency
-      borderWidth: 1,
+      width: 280, // Wider for prominence
+      height: 48,
+      borderWidth: 2,
       borderColor: Colors[colorScheme].primaryText,
-      borderRadius: 25, // Aligned with Signup
+      borderRadius: 24,
       backgroundColor: 'transparent',
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: 15,
+      marginBottom: 12,
     },
     buttonText: {
       fontFamily: Fonts.Comfortaa.Medium,
       fontSize: 16,
       color: Colors[colorScheme].primaryText,
-      textAlign: 'center',
     },
     createAccountButton: {
-      width: 250,
-      height: 50,
-      backgroundColor: Colors[colorScheme].primaryText,
-      borderRadius: 25,
+      width: 280,
+      height: 48,
+      backgroundColor: Colors[colorScheme].tabIconSelected, // Use selected color for emphasis
+      borderRadius: 24,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 20,
@@ -83,13 +82,12 @@ const WelcomePage = () => {
       fontFamily: Fonts.Comfortaa.Medium,
       fontSize: 16,
       color: Colors[colorScheme].background,
-      textAlign: 'center',
     },
     dividerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 20,
-      width: 250,
+      width: 280,
     },
     dividerLine: {
       flex: 1,
@@ -115,20 +113,18 @@ const WelcomePage = () => {
     },
     versionText: {
       fontFamily: Fonts.Comfortaa.Regular,
-      fontSize: 12, // Small but legible
-      color: Colors[colorScheme].icon, // Subtle color
-      textAlign: 'right',
+      fontSize: 12,
+      color: Colors[colorScheme].icon,
     },
   });
 
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
-        <Text style={styles.title}>ĐÓI BỤNG?</Text>
+        <Text style={styles.title}>Quản Lý Dễ Dàng!</Text>
         <Text style={styles.subtitle}>
-          LÊN{' '}
-          <Text style={[styles.subtitle, styles.highlightedText]}>MAP</Text>,{' '}
-          <Text style={[styles.subtitle, styles.highlightedText]}>MĂM</Text> VẶT NGAY THÔI
+          Đưa quán ăn của bạn lên{' '}
+          <Text style={[styles.subtitle, styles.highlightedText]}>MAP</Text> và thu hút khách hàng!
         </Text>
       </View>
       <Image source={logo} style={styles.logo} />
@@ -136,24 +132,15 @@ const WelcomePage = () => {
         style={styles.loginButton}
         onPress={() => router.push('/(auth)/signin-merchant')}
       >
-        <Text style={styles.buttonText}>Đăng nhập</Text>
+        <Text style={styles.buttonText}>Quản lý quán ngay</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.createAccountButton}
         onPress={() => router.push('/(auth)/signup')}
       >
-        <Text style={styles.createAccountText}>Tạo tài khoản</Text>
+        <Text style={styles.createAccountText}>Đăng ký người dùng</Text>
       </TouchableOpacity>
-      <View style={styles.dividerContainer}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>Hoặc</Text>
-        <View style={styles.dividerLine} />
-      </View>
-      <TouchableOpacity onPress={() => router.push('/(tabs)')}>
-        <Text style={styles.continueWithoutLogin}>
-          Tiếp tục vào app mà không cần đăng nhập
-        </Text>
-      </TouchableOpacity>
+     
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>Phiên bản: {APP_VERSION}</Text>
       </View>
