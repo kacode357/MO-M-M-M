@@ -1,4 +1,4 @@
-import { defaultAxiosInstance } from '@/config/axios.customize';
+import { defaultAxiosInstance, skipNotiAxiosInstance } from '@/config/axios.customize';
 
 const createFoodType = async (data: { name: string }) => {
     const response = await defaultAxiosInstance.post('/api/FoodType/create', data);
@@ -6,7 +6,7 @@ const createFoodType = async (data: { name: string }) => {
 };
 
 const searchFoodType = async (params: { pageNum: number; pageSize: number; searchKeyword: string; status: boolean }) => {
-    const response = await defaultAxiosInstance.post('/api/FoodType/search', params);
+    const response = await skipNotiAxiosInstance.post('/api/FoodType/search', params);
     return response.data;
 };
 
@@ -28,3 +28,4 @@ const deleteFoodType = async (id: string) => {
 export {
     createFoodType, deleteFoodType, getFoodTypeById, searchFoodType, updateFoodType
 };
+

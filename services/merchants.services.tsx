@@ -18,7 +18,7 @@ const CreateUserApi = async (data: {
 };
 
 const LoginUserApi = async (data: { userName: string; password: string }) => {
-  const response = await skipNotiAxiosInstance.post("/api/users/login", data);
+  const response = await skipNotiAxiosInstance.post("/api/merchants/login", data);
   return response.data;
 };
 const CheckCreatedSnackplaceApi = async () => {

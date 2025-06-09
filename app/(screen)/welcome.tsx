@@ -134,7 +134,7 @@ const WelcomePage = () => {
       <Image source={logo} style={styles.logo} />
       <TouchableOpacity
         style={styles.loginButton}
-        onPress={() => router.push('/(auth)/merchant')}
+        onPress={() => router.push('/(auth)/signin-merchant')}
       >
         <Text style={styles.buttonText}>Đăng nhập</Text>
       </TouchableOpacity>

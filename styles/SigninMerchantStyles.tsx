@@ -13,11 +13,11 @@ export const signinStyles = (colorScheme: 'light' | 'dark' = 'light', isLoading:
     },
     logoContainer: {
       alignSelf: 'center',
-      marginBottom: 20,
+      marginBottom: 0,
     },
     logo: {
-      width: 180,
-      height: 100,
+      width: 160,
+      height: 90,
       
     },
     textContainer: {
@@ -32,7 +32,7 @@ export const signinStyles = (colorScheme: 'light' | 'dark' = 'light', isLoading:
       letterSpacing: -0.02 * 53,
       color: Colors[colorScheme].text,
       textAlign: 'left',
-      marginBottom: 30,
+      marginBottom: 10,
     },
     inputLabel: {
       fontFamily: Fonts.Comfortaa.Medium,

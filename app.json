@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Măm Map",
-    "slug": "m-m",
+    "name": "M Merchant",
+    "slug": "m-merchant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo-app.png",
-    "scheme": "mm",
+    "scheme": "mmerchant",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.kaluu.mm"
+      "package": "com.kaluu.mmerchant"
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +38,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1c21e5a5-792f-4278-adc8-aef1ee3b3415"
+        "projectId": "a95b5fc4-5b9d-4e7b-8ee1-20e0ff4c340f"
       }
     }
   }

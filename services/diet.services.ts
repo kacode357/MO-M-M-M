@@ -1,4 +1,4 @@
-import { defaultAxiosInstance } from '@/config/axios.customize';
+import { defaultAxiosInstance, skipNotiAxiosInstance } from '@/config/axios.customize';
 
  const createDiet = async (data: { name: string }) => {
     const response = await defaultAxiosInstance.post('/api/Diet/create', data);
@@ -6,7 +6,7 @@ import { defaultAxiosInstance } from '@/config/axios.customize';
 };
  const searchDiet = async (params: { pageNum: number; pageSize: number; searchKeyword: string; status: boolean }) => {
    
-        const response = await defaultAxiosInstance.post('/api/Diet/search', params);
+        const response = await skipNotiAxiosInstance.post('/api/Diet/search', params);
         return response.data;
    
 };

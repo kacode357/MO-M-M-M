@@ -1,7 +1,7 @@
 import AlertModal from '@/components/AlertModal'; // Adjust the import path as needed
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { CreateUserApi } from '@/services/user.services';
+import { CreateUserApi } from '@/services/merchants.services';
 import { signupStyles } from '@/styles/SignupStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -113,7 +113,7 @@ const Signup = () => {
       userName,
       password,
     });
-    router.push('/(auth)/signin');
+    router.push('/(auth)/signin-merchant');
   } catch (error) {
     console.error('Signup error:', error);
   } finally {
@@ -265,7 +265,7 @@ const Signup = () => {
 
         <View style={styles.loginLinkContainer}>
           <Text style={styles.loginText}>Bạn đã có tài khoản? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signin-merchant')}>
             <Text style={styles.loginLink}>Đăng nhập tại đây</Text>
           </TouchableOpacity>
         </View>

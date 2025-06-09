@@ -1,4 +1,4 @@
-import { defaultAxiosInstance } from '@/config/axios.customize';
+import { defaultAxiosInstance, skipNotiAxiosInstance } from '@/config/axios.customize';
 
 const createTaste = async (data: { name: string }) => {
     const response = await defaultAxiosInstance.post('/api/Taste/create', data);
@@ -6,7 +6,7 @@ const createTaste = async (data: { name: string }) => {
 };
 
 const searchTaste = async (params: { pageNum: number; pageSize: number; searchKeyword: string; status: boolean }) => {
-    const response = await defaultAxiosInstance.post('/api/Taste/search', params);
+    const response = await skipNotiAxiosInstance.post('/api/Taste/search', params);
     return response.data;
 };
 
@@ -28,3 +28,4 @@ const deleteTaste = async (id: string) => {
 export {
     createTaste, deleteTaste, getTasteById, searchTaste, updateTaste
 };
+
