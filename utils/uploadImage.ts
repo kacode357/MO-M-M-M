@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert } from 'react-native';
-
+// This file handles image upload to Cloudinary using Expo's ImagePicker and axios for HTTP requests.
 const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dgtbovcjg/image/upload';
 const UPLOAD_PRESET = 'mma-upload';
 
