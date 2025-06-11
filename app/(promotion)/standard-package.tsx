@@ -11,7 +11,7 @@ const StandardPackageDetails = () => {
       {/* Top section with header and subtitle */}
       <View style={styles.topSection}>
         <View style={styles.header}>
-          <Text style={styles.title}>Gói Cơ Bản</Text>
+          <Text style={styles.title}>Gói Tiêu Chuẩn</Text>
           <MaterialIcons
             name="close"
             size={34}
@@ -27,23 +27,20 @@ const StandardPackageDetails = () => {
       <View style={styles.cardWrapper}>
         <View style={styles.cardContainer}>
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>49.000</Text>
+            <Text style={styles.price}>69.000</Text>
             <Text style={styles.currency}>VND</Text>
             <Text style={styles.duration}>/tháng</Text>
           </View>
           <View style={styles.featureContainer}>
             <View style={styles.featureRow}>
               <MaterialIcons name="check" size={20} color="#000000" />
-              <Text style={styles.feature}>Tạo menu</Text>
+              <Text style={styles.feature}>Huy hiệu “Đối tác”, “Quán Đỉnh nhà Măm”</Text>
             </View>
             <View style={styles.featureRow}>
               <MaterialIcons name="check" size={20} color="#000000" />
-              <Text style={styles.feature}>Tạo logo với AI</Text>
+              <Text style={styles.feature}>Được đề xuất trong “top quán”</Text>
             </View>
-            <View style={styles.featureRow}>
-              <MaterialIcons name="check" size={20} color="#000000" />
-              <Text style={styles.feature}>Cập nhật thông tin liên hệ, giỏ hàng</Text>
-            </View>
+            
           </View>
           <Text style={styles.upgradeButton}>Nâng cấp ngay</Text>
         </View>
@@ -93,7 +90,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.light.primaryText,
     borderWidth: 1,
     alignItems: 'center',
-    width: '80%', // Reduced width to 80% for a more compact appearance
+    width: '85%',
   },
   priceContainer: {
     flexDirection: 'row',

@@ -19,6 +19,7 @@ interface CreateSnackPlaceParams {
   foodTypeIds: string[];
   description: string; // Added field for snack place description
 }
+
 // Interface for parameters to update a snack place
 interface UpdateSnackPlaceParams {
   snackPlaceId: string;
@@ -31,7 +32,7 @@ interface UpdateSnackPlaceParams {
   description: string;
   coordinates: string;
   averagePrice: number;
-image: string | null;
+  image: string | null;
   businessModelId: string;
   tasteIds: string[];
   dietIds: string[];
@@ -39,11 +40,19 @@ image: string | null;
   mainDish: string;
 }
 
+// Interface for parameters to get click statistics
+interface GetClickParams {
+  snackPlaceId: string;
+  startDate: string; // Date in a suitable format (e.g., "YYYY-MM-DD")
+  endDate: string;   // Date in a suitable format (e.g., "YYYY-MM-DD")
+}
+
 // Function to create a snack place via API
 const createSnackPlace = async (params: CreateSnackPlaceParams) => {
   const response = await defaultAxiosInstance.post('/api/SnackPlaces/create', params);
   return response.data;
 };
+
 // Function to get a snack place by ID via API
 const getSnackPlaceById = async (id: string) => {
   const response = await skipNotiAxiosInstance.get(`/api/SnackPlaces/getById`, {
@@ -57,5 +66,21 @@ const updateSnackPlace = async (params: UpdateSnackPlaceParams) => {
   const response = await defaultAxiosInstance.put('/api/SnackPlaces/update', params);
   return response.data;
 };
-export { createSnackPlace, getSnackPlaceById, updateSnackPlace };
+
+// Function to get snack place statistics by ID via API
+const getSnackPlaceStats = async (id: string) => {
+  const response = await skipNotiAxiosInstance.get('/api/SnackPlaces/stats', {
+    params: { id },
+  });
+  return response.data;
+};
+
+// Function to get click statistics for a snack place within a date range
+const getSnackPlaceClicks = async (params: GetClickParams) => {
+  const response = await skipNotiAxiosInstance.post('/api/SnackPlaces/getClick', params);
+  console.log('getSnackPlaceClicks response:', response.data);
+  return response.data;
+};
+
+export { createSnackPlace, getSnackPlaceById, getSnackPlaceClicks, getSnackPlaceStats, updateSnackPlace };
 

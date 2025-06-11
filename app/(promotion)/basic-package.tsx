@@ -27,23 +27,20 @@ const BasicPackageDetails = () => {
       <View style={styles.cardWrapper}>
         <View style={styles.cardContainer}>
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>49.000</Text>
+            <Text style={styles.price}>39.000</Text>
             <Text style={styles.currency}>VND</Text>
             <Text style={styles.duration}>/tháng</Text>
           </View>
           <View style={styles.featureContainer}>
             <View style={styles.featureRow}>
               <MaterialIcons name="check" size={20} color="#000000" />
-              <Text style={styles.feature}>Tạo menu</Text>
+              <Text style={styles.feature}>Tạo logo với AI (3 lần/1 tháng)</Text>
             </View>
             <View style={styles.featureRow}>
               <MaterialIcons name="check" size={20} color="#000000" />
-              <Text style={styles.feature}>Tạo logo với AI</Text>
+              <Text style={styles.feature}>Cho phép quán trả lời review</Text>
             </View>
-            <View style={styles.featureRow}>
-              <MaterialIcons name="check" size={20} color="#000000" />
-              <Text style={styles.feature}>Cập nhật thông tin liên hệ, giỏ hàng</Text>
-            </View>
+            
           </View>
           <Text style={styles.upgradeButton}>Nâng cấp ngay</Text>
         </View>
@@ -93,7 +90,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.light.primaryText,
     borderWidth: 1,
     alignItems: 'center',
-    width: '80%', // Reduced width to 80% for a more compact appearance
+    width: '85%', // Reduced width to 80% for a more compact appearance
   },
   priceContainer: {
     flexDirection: 'row',
