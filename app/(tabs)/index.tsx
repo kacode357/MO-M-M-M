@@ -2,7 +2,7 @@ import AlertModal from "@/components/AlertModal";
 import { Colors } from "@/constants/Colors";
 import { Fonts, getFontMap } from "@/constants/Fonts";
 import { CheckCreatedSnackplaceApi } from "@/services/merchants.services";
-import { getSnackPlaceClicks, getSnackPlaceStats } from "@/services/snackplace.services"; // Import new API
+import { getSnackPlaceStats } from "@/services/snackplace.services"; // Removed getSnackPlaceClicks
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import React, { useEffect, useState } from "react";
@@ -14,13 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BarChart } from "react-native-chart-kit";
 
-// Screen width for responsive chart sizing
+// Screen width for responsive chart sizing (no longer needed but kept for consistency)
 const screenWidth = Dimensions.get("window").width;
-
-// Helper function to format date as YYYY-MM-DD
-const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
 export default function DataScreen() {
   // Load fonts
@@ -37,7 +33,6 @@ export default function DataScreen() {
     numOfClicks: 0,
   });
   const [snackPlaceId, setSnackPlaceId] = useState<string | null>(null);
-  const [clickData, setClickData] = useState<any[]>([]); // State for click statistics
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +41,7 @@ export default function DataScreen() {
     const fetchSnackPlaceData = async () => {
       try {
         const response = await CheckCreatedSnackplaceApi();
-       
+        console.log("CheckCreatedSnackplaceApi Response:", response);
         const id = response?.data?.snackPlaceId;
         if (id) {
           setSnackPlaceId(id); // Store snackPlaceId
@@ -61,44 +56,26 @@ export default function DataScreen() {
     fetchSnackPlaceData();
   }, []);
 
-  // Fetch snack place stats and click data using snackPlaceId
+  // Fetch snack place stats using snackPlaceId
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
       if (!snackPlaceId) return; // Wait until snackPlaceId is available
 
       try {
         setIsLoading(true);
-
-        // Fetch stats
-        const statsResponse = await getSnackPlaceStats(snackPlaceId);
-        setStats(statsResponse.data);
-
-        // Fetch click data with date range (last 7 days)
-        const endDate = new Date(); // Current date: June 11, 2025, 01:50 PM +07
-        const startDate = new Date(endDate);
-        startDate.setDate(endDate.getDate() - 7); // 7 days prior: June 4, 2025
-        const clickResponse = await getSnackPlaceClicks({
-          snackPlaceId,
-          startDate: formatDate(startDate),
-          endDate: formatDate(endDate),
-        });
-        const clicksByDay = clickResponse.data.clicksByDayOfWeek.map((day: any) => ({
-          day: day.day,
-          count: day.dateGroup.length, // Count of clicks per day
-        }));
-        console.log("Click Data:", clickResponse.data);
-        setClickData(clicksByDay);
-
+        const response = await getSnackPlaceStats(snackPlaceId);
+        console.log("Snack Place Stats Response:", response);
+        setStats(response.data); // Update state with API data
         setError(null);
       } catch (error) {
-        console.error("Fetch Data Error:", error);
-        setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+        console.error("getSnackPlaceStats Error:", error);
+        setError("Không thể tải dữ liệu thống kê. Vui lòng thử lại.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchStats();
   }, [snackPlaceId]);
 
   // Show centered loading spinner while fonts or data are loading
@@ -124,16 +101,6 @@ export default function DataScreen() {
       </View>
     );
   }
-
-  // Prepare chart data from click statistics
-  const chartData = {
-    labels: clickData.map((day) => day.day),
-    datasets: [
-      {
-        data: clickData.map((day) => day.count), // Number of clicks per day
-      },
-    ],
-  };
 
   // Handle button press to show modal
   const handleReplyComments = () => {
@@ -197,42 +164,6 @@ export default function DataScreen() {
             </Text>
           </View>
         ))}
-      </View>
-
-      {/* Click Statistics Bar Chart */}
-      <View style={styles.chartContainer}>
-        <Text
-          style={[styles.chartTitle, { fontFamily: Fonts.Comfortaa.Medium }]}
-        >
-          Lượt nhấp theo ngày trong tuần
-        </Text>
-        <BarChart
-          data={chartData}
-          width={screenWidth - 40}
-          height={250}
-          yAxisLabel=""
-          yAxisSuffix=""
-          chartConfig={{
-            backgroundColor: Colors.light.grayBackground,
-            backgroundGradientFrom: Colors.light.grayBackground,
-            backgroundGradientTo: Colors.light.grayBackground,
-            decimalPlaces: 0,
-            color: () => Colors.light.primaryText,
-            labelColor: () => Colors.light.blackText,
-            style: {
-              borderRadius: 12,
-            },
-            propsForLabels: {
-              fontSize: 12,
-              fontWeight: "500",
-            },
-          }}
-          style={{
-            marginVertical: 8,
-            borderRadius: 12,
-            paddingBottom: 12,
-          }}
-        />
       </View>
 
       {/* Reply to Customer Comments Button */}
@@ -316,17 +247,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.light.blackText,
     textAlign: "center",
-  },
-  chartContainer: {
-    marginTop: 8,
-    alignItems: "flex-start",
-  },
-  chartTitle: {
-    fontSize: 18,
-    color: Colors.light.blackText,
-    fontWeight: "bold",
-    marginBottom: 4,
-    textAlign: "left",
   },
   replyButton: {
     backgroundColor: Colors.light.primaryText,
