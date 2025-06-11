@@ -2,55 +2,69 @@ import AlertModal from "@/components/AlertModal";
 import { Colors } from "@/constants/Colors";
 import { Fonts, getFontMap } from "@/constants/Fonts";
 import { CheckCreatedSnackplaceApi } from "@/services/merchants.services";
-import { getSnackPlaceStats } from "@/services/snackplace.services"; // Removed getSnackPlaceClicks
+import { getSnackPlaceStats } from "@/services/snackplace.services";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Dimensions,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
-// Screen width for responsive chart sizing (no longer needed but kept for consistency)
-const screenWidth = Dimensions.get("window").width;
+// Interface for snack place stats
+interface SnackPlaceStats {
+  averageRating: number;
+  numOfComments: number;
+  recommendPercent: number;
+  numOfClicks: number;
+}
+
+// Interface for card data
+interface CardData {
+  value: number | string;
+  label: string;
+}
 
 export default function DataScreen() {
   // Load fonts
   const [fontsLoaded] = useFonts(getFontMap());
 
   // State for controlling AlertModal visibility
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   // State for snack place stats
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<SnackPlaceStats>({
     averageRating: 0,
     numOfComments: 0,
-    numOfRecommends: 0,
+    recommendPercent: 0,
     numOfClicks: 0,
   });
   const [snackPlaceId, setSnackPlaceId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Fetch snackPlaceId from CheckCreatedSnackplaceApi
   useEffect(() => {
     const fetchSnackPlaceData = async () => {
       try {
         const response = await CheckCreatedSnackplaceApi();
-        console.log("CheckCreatedSnackplaceApi Response:", response);
         const id = response?.data?.snackPlaceId;
         if (id) {
-          setSnackPlaceId(id); // Store snackPlaceId
+          setSnackPlaceId(id);
         } else {
           setError("Không tìm thấy ID quán ăn từ thông tin quán.");
         }
       } catch (error) {
         console.error("CheckCreatedSnackplaceApi Error:", error);
         setError("Không thể lấy thông tin quán ăn. Vui lòng thử lại.");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchSnackPlaceData();
@@ -59,13 +73,12 @@ export default function DataScreen() {
   // Fetch snack place stats using snackPlaceId
   useEffect(() => {
     const fetchStats = async () => {
-      if (!snackPlaceId) return; // Wait until snackPlaceId is available
+      if (!snackPlaceId) return;
 
       try {
         setIsLoading(true);
         const response = await getSnackPlaceStats(snackPlaceId);
-        console.log("Snack Place Stats Response:", response);
-        setStats(response.data); // Update state with API data
+        setStats(response.data);
         setError(null);
       } catch (error) {
         console.error("getSnackPlaceStats Error:", error);
@@ -77,6 +90,35 @@ export default function DataScreen() {
 
     fetchStats();
   }, [snackPlaceId]);
+
+  // Handle pull-to-refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setSnackPlaceId(null);
+    setStats({
+      averageRating: 0,
+      numOfComments: 0,
+      recommendPercent: 0,
+      numOfClicks: 0,
+    });
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await CheckCreatedSnackplaceApi();
+      const id = response?.data?.snackPlaceId;
+      if (id) {
+        setSnackPlaceId(id);
+      } else {
+        setError("Không tìm thấy ID quán ăn từ thông tin quán.");
+      }
+    } catch (error) {
+      console.error("Refresh CheckCreatedSnackplaceApi Error:", error);
+      setError("Không thể làm mới dữ liệu. Vui lòng thử lại.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Show centered loading spinner while fonts or data are loading
   if (!fontsLoaded || isLoading) {
@@ -113,15 +155,25 @@ export default function DataScreen() {
   };
 
   // Dynamic card data based on API response
-  const cardData = [
+  const cardData: CardData[] = [
     { value: stats.averageRating.toFixed(1), label: "Đánh giá sao" },
     { value: stats.numOfComments, label: "Lượt đánh giá" },
-    { value: `${stats.numOfRecommends}%`, label: "Đề xuất" },
+    { value: stats.recommendPercent, label: "Đề xuất" },
     { value: stats.numOfClicks, label: "Lượt truy cập" },
   ];
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={[Colors.light.primaryText]}
+          tintColor={Colors.light.primaryText}
+        />
+      }
+    >
       <Text style={[styles.title, { fontFamily: Fonts.Baloo2.Bold }]}>
         Báo cáo số liệu
       </Text>
@@ -160,13 +212,16 @@ export default function DataScreen() {
               </Text>
             </View>
             <Text style={[styles.value, { fontFamily: Fonts.Baloo2.Bold }]}>
-              {item.label === "Đánh giá sao" ? `${item.value}/5` : item.value}
+              {item.label === "Đánh giá sao"
+                ? `${item.value}/5`
+                : item.label === "Đề xuất"
+                ? `${item.value}%`
+                : item.value}
             </Text>
           </View>
         ))}
       </View>
 
-      {/* Reply to Customer Comments Button */}
       <TouchableOpacity style={styles.replyButton} onPress={handleReplyComments}>
         <Text
           style={[
@@ -178,7 +233,6 @@ export default function DataScreen() {
         </Text>
       </TouchableOpacity>
 
-      {/* Alert Modal */}
       <AlertModal
         visible={isModalVisible}
         title="Thông báo"
@@ -188,7 +242,7 @@ export default function DataScreen() {
         confirmText="OK"
         onConfirm={handleModalConfirm}
       />
-    </View>
+    </ScrollView>
   );
 }
 
