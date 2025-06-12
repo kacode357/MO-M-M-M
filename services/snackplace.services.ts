@@ -40,12 +40,6 @@ interface UpdateSnackPlaceParams {
   mainDish: string;
 }
 
-// Interface for parameters to get click data
-interface GetClickParams {
-  startDate: string;
-  endDate: string;
-}
-
 // Function to create a snack place via API
 const createSnackPlace = async (params: CreateSnackPlaceParams) => {
   const response = await defaultAxiosInstance.post('/api/SnackPlaces/create', params);
@@ -74,10 +68,13 @@ const getSnackPlaceStats = async (id: string) => {
   return response.data;
 };
 
-// Function to get click data via API
-const getClickData = async (params: GetClickParams) => {
-  const response = await defaultAxiosInstance.post('/api/SnackPlaces/getClick', params);
+// Function to get snack place clicks within a date range via API
+const getSnackPlaceClicks = async (startDate: string, endDate: string) => {
+  const response = await skipNotiAxiosInstance.get('/api/SnackPlaces/getClick', {
+    params: { startDate, endDate },
+  });
   return response.data;
 };
 
-export { createSnackPlace, getClickData, getSnackPlaceById, getSnackPlaceStats, updateSnackPlace };
+export { createSnackPlace, getSnackPlaceById, getSnackPlaceClicks, getSnackPlaceStats, updateSnackPlace };
+
