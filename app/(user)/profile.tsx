@@ -8,18 +8,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  ActivityIndicator // Import ActivityIndicator for loading state
+  ,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 interface UserInfo {
   fullName: string;
   email: string;
   photo?: string;
+  packageStatus: string; // Add packageStatus to UserInfo interface
 }
 
 const UserProfile = () => {
@@ -34,14 +37,33 @@ const UserProfile = () => {
       const user_fullname = await AsyncStorage.getItem('user_fullname');
       const { data } = await GetCurrentUserApi();
 
+      let currentPackageStatus = 'Miễn phí'; // Default status
+
+      // Try to retrieve packageNames from AsyncStorage
+      const storedPackageNamesString = await AsyncStorage.getItem('packageNames');
+      if (storedPackageNamesString) {
+        const storedPackageNames: string[] = JSON.parse(storedPackageNamesString);
+
+        if (storedPackageNames.length > 0) {
+          // If there are packages, display them
+          currentPackageStatus = storedPackageNames.join(', '); // Join package names with a comma
+        }
+      }
+
       setUserInfo({
         fullName: user_fullname ?? data.fullName ?? 'Unknown User',
         email: data.email,
         photo: data.image,
+        packageStatus: currentPackageStatus, // Set the determined package status
       });
     } catch (error) {
       console.error('Error fetching user info:', error);
-      router.replace('/(auth)/signin-merchant');
+      // If GetCurrentUserApi fails or AsyncStorage fails, we might still want to show a fallback
+      // or redirect based on the severity of the error.
+      // For now, let's just log and set null userInfo, allowing the 'Failed to load' message.
+      setUserInfo(null); // Set userInfo to null to trigger the "Failed to load user data" message
+      // Consider redirecting to sign-in only for authentication-related errors
+      // router.replace('/(auth)/signin-merchant');
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +78,8 @@ const UserProfile = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <ActivityIndicator size="large" color={Colors.light.primaryText} />
+        <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>Đang tải thông tin...</Text>
       </View>
     );
   }
@@ -64,7 +87,10 @@ const UserProfile = () => {
   if (!userInfo) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Failed to load user data</Text>
+        <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>Không thể tải dữ liệu người dùng</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchUserInfo}>
+          <Text style={[styles.retryButtonText, { fontFamily: Fonts.Comfortaa.Medium }]}>Thử lại</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -89,7 +115,8 @@ const UserProfile = () => {
             >
               {userInfo.fullName}
             </Text>
-            <Text style={styles.freeLabel}>Miễn phí</Text>
+            {/* Display the determined package status */}
+            <Text style={styles.freeLabel}>{userInfo.packageStatus}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => router.push('/settings')}>
@@ -197,10 +224,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.light.background, // Ensure background color for consistency
   },
   loadingText: {
-    fontFamily: Fonts.Comfortaa.Regular,
+    marginTop: 10,
     fontSize: 16,
-    color: Colors.light.text,
+    color: Colors.light.blackText, // Use a suitable color from your Colors
+  },
+  retryButton: {
+    backgroundColor: Colors.light.primaryText, // Use a suitable color from your Colors
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 15,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    color: Colors.light.whiteText,
+    textAlign: 'center',
   },
 });

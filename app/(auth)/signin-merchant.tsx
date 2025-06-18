@@ -54,41 +54,77 @@ const SigninMerChant = () => {
     }
 
     console.log("Attempting to sign in with:", { userName, password });
-    setIsLoading(true);
-    // No try-catch to avoid handling API errors
-    const loginResponse = await LoginUserApi({ userName, password });
-    const { accessToken, refreshToken } = loginResponse.data;
-    await AsyncStorage.setItem("accessToken", accessToken);
-    await AsyncStorage.setItem("refreshToken", refreshToken);
+    setIsLoading(true); // Bắt đầu trạng thái loading
 
-    const userResponse = await GetCurrentUserApi();
-    const {
-      premium,
-      id,
-      userName: userNameResponse,
-      email,
-      fullname,
-      roles,
-    } = userResponse.data;
-    console.log("User response:", roles);
+    try {
+      const loginResponse = await LoginUserApi({ userName, password });
+      const { accessToken, refreshToken } = loginResponse.data;
+      await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("refreshToken", refreshToken);
 
-    // Check if the user has the Merchant role
-    if (roles[0] !== "Merchant") {
-      console.log("Access denied: User is not a Merchant");
-      return;
+      const userResponse = await GetCurrentUserApi();
+      const {
+        premium, // Cần đảm bảo trường 'premium' có tồn tại trong userResponse.data nếu bạn muốn dùng
+        id,
+        userName: userNameResponse,
+        email,
+        fullname,
+        roles,
+        userPackages, // <--- THÊM DÒNG NÀY ĐỂ LẤY userPackages
+      } = userResponse.data;
+     
+
+      // Check if the user has the Merchant role
+      if (roles[0] !== "Merchant") {
+        console.log("Access denied: User is not a Merchant");
+        setModalConfig({
+          title: "Lỗi",
+          message: "Tài khoản của bạn không có quyền truy cập.",
+        });
+        setModalVisible(true);
+        setIsLoading(false); // Đặt lại loading nếu không phải là Merchant
+        return;
+      }
+      console.log("User is a Merchant, proceeding with login", premium);
+
+      // Store user data in AsyncStorage
+      await AsyncStorage.setItem("user_id", id);
+      await AsyncStorage.setItem("user_name", userNameResponse);
+      await AsyncStorage.setItem("user_email", email);
+      await AsyncStorage.setItem("user_fullname", fullname);
+      await AsyncStorage.setItem("user_role", roles[0]);
+
+      // --- BẮT ĐẦU PHẦN MỚI: LƯU TÊN CÁC GÓI VÀO AsyncStorage ---
+      if (userPackages && userPackages.length > 0) {
+        const packageNames = userPackages.map((item: any) => item.packageName); // Đảm bảo type của item
+        await AsyncStorage.setItem('packageNames', JSON.stringify(packageNames));
+     
+      } else {
+        // Nếu không có gói nào, đảm bảo AsyncStorage được xóa hoặc đặt về mảng rỗng
+        await AsyncStorage.removeItem('packageNames'); // Hoặc setItem('packageNames', '[]')
+        console.log('Không có gói nào, đã xóa packageNames khỏi AsyncStorage.');
+      }
+      // --- KẾT THÚC PHẦN MỚI ---
+
+      // Navigate to tabs
+      router.push("/(tabs)");
+    } catch (error: any) {
+      console.error("Lỗi đăng nhập:", error);
+      let errorMessage = "Đã có lỗi xảy ra. Vui lòng thử lại.";
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      setModalConfig({
+        title: "Lỗi Đăng Nhập",
+        message: errorMessage,
+        isSuccess: false,
+      });
+      setModalVisible(true);
+    } finally {
+      setIsLoading(false); // Luôn đặt lại loading khi quá trình kết thúc (thành công hoặc thất bại)
     }
-
-    // Store user data in AsyncStorage
-    await AsyncStorage.setItem("user_premium", JSON.stringify(premium));
-    await AsyncStorage.setItem("user_id", id);
-    await AsyncStorage.setItem("user_name", userNameResponse);
-    await AsyncStorage.setItem("user_email", email);
-    await AsyncStorage.setItem("user_fullname", fullname);
-    await AsyncStorage.setItem("user_role", roles[0]);
-
-    // Navigate to tabs
-    router.push("/(tabs)");
-    setIsLoading(false);
   };
   const styles = signinStyles(colorScheme, isLoading);
 
@@ -168,7 +204,7 @@ const SigninMerChant = () => {
         <View style={styles.signupLinkContainer}>
           <Text style={styles.signupText}>Bạn chưa có tài khoản? </Text>
           <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-            <Text style={styles.signupLink}>Đăng ký tại đây</Text>
+            <Text style={styles.signupLink}>Đăng ký tại đây</Text>
           </TouchableOpacity>
         </View>
 

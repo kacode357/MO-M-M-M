@@ -87,17 +87,16 @@ export default function DataScreen() {
     }
   }, [snackPlaceId]);
 
-  // Hàm lấy dữ liệu lượt click cho 6 ngày qua (June 6–12, 2025)
+  // Hàm lấy dữ liệu lượt click cho 6 ngày qua
   const fetchClicks = useCallback(async () => {
     if (!snackPlaceId) return;
     try {
       setIsLoading(true);
-      const endDate = new Date().toLocaleDateString("en-CA"); // June 12, 2025
-      const startDate = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA"); // June 6, 2025
+      const today = new Date();
+      const endDate = today.toLocaleDateString("en-CA"); // Định dạng YYYY-MM-DD
+      const startDate = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA"); // 6 ngày trước
       const response = await getSnackPlaceClicks(startDate, endDate);
       setClickData(response);
-      console.log(`Lượt click từ ${startDate} đến ${endDate} cho snackPlaceId ${snackPlaceId}:`, response);
-      console.log("clicksByDayOfWeek chi tiết:", JSON.stringify(response.data.clicksByDayOfWeek, null, 2));
       setError(null);
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu lượt click:", error);
@@ -115,7 +114,7 @@ export default function DataScreen() {
     setClickData(null);
     setError(null);
     setIsLoading(true);
-    await fetchSnackPlaceData();
+    await fetchSnackPlaceData(); // Kích hoạt lại fetchSnackPlaceData để lấy ID mới
     setIsRefreshing(false);
   }, [fetchSnackPlaceData]);
 
@@ -136,7 +135,7 @@ export default function DataScreen() {
   const getPreviousDays = useCallback((currentDate: Date, numDays: number) => {
     const days = [];
     const vietnameseDays = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
-    for (let i = numDays - 1; i >= 0; i--) { // Chronological order (earliest to latest)
+    for (let i = numDays - 1; i >= 0; i--) { // Thứ tự thời gian (sớm nhất đến muộn nhất)
       const date = new Date(currentDate.getTime() - i * 24 * 60 * 60 * 1000);
       const dayIndex = date.getDay();
       days.push({
@@ -144,15 +143,13 @@ export default function DataScreen() {
         date: date.toLocaleDateString("en-CA"), // e.g., 2025-06-07
       });
     }
-    return days; // e.g., [{ vietnamese: "Thứ 7", date: "2025-06-07" }, ..., { vietnamese: "Thứ 5", date: "2025-06-12" }]
+    return days;
   }, []);
 
   // Component biểu đồ cột
   const BarChart = () => {
-    // Lấy 6 ngày trước (June 7 to June 12, chronological order)
     const expectedDays = getPreviousDays(new Date(), 6);
 
-    // Ánh xạ tên ngày tiếng Anh sang tiếng Việt
     const englishToVietnamese: { [key: string]: string } = {
       Sunday: "Chủ nhật",
       Monday: "Thứ 2",
@@ -163,7 +160,6 @@ export default function DataScreen() {
       Saturday: "Thứ 7",
     };
 
-    // Sắp xếp dữ liệu theo ngày, sử dụng dateGroup.clickedAt
     const sortedData = useMemo(() => {
       if (!clickData?.data.clicksByDayOfWeek.length) return [];
       return expectedDays.map(expected => {
@@ -187,7 +183,6 @@ export default function DataScreen() {
       });
     }, [clickData, expectedDays]);
 
-    // Hiển thị loading nếu đang tải
     if (isLoading) {
       return (
         <View style={styles.chartContainer}>
@@ -197,7 +192,6 @@ export default function DataScreen() {
       );
     }
 
-    // Hiển thị thông báo nếu không có dữ liệu
     if (!sortedData.length || sortedData.every(day => day.totalClicks === 0)) {
       return (
         <View style={styles.chartContainer}>
@@ -209,32 +203,33 @@ export default function DataScreen() {
 
     const chartHeight = 200;
     const chartWidth = Dimensions.get("window").width - 32;
+    // Chỉ tính các thanh có totalClicks > 0 để xác định số lượng thanh thực tế
     const numBars = sortedData.filter(day => day.totalClicks > 0).length;
-    const barWidth = Math.min(chartWidth / (numBars * 1.5), 50);
-    const maxClicks = Math.max(...sortedData.map(day => day.totalClicks), 1); // Minimum 1 to avoid division by zero
-    // Tạo yAxisTicks động dựa trên maxClicks
+    // Điều chỉnh barWidth dựa trên số lượng thanh có dữ liệu
+    const barWidth = Math.min(chartWidth / (numBars > 0 ? numBars * 1.5 : 1), 50); // Đảm bảo numBars > 0 để tránh chia cho 0
+    const maxClicks = Math.max(...sortedData.map(day => day.totalClicks), 1);
     const yAxisTicks = Array.from(
       { length: 6 },
       (_, i) => Math.round(maxClicks * (1 - i / 5))
-    ); // e.g., [10, 8, 6, 4, 2, 0] for maxClicks=10
+    );
 
     return (
       <View style={styles.chartContainer}>
         <Text style={[styles.chartTitle, { fontFamily: Fonts.Baloo2.Bold }]}>Lượt click theo ngày</Text>
         <View style={styles.chart}>
           <View style={styles.yAxis}>
-            {yAxisTicks.map(tick => (
-              <Text key={tick} style={[styles.axisLabel, { fontFamily: Fonts.Comfortaa.Regular }]}>
+            {yAxisTicks.map((tick, index) => ( 
+              <Text key={`y-axis-tick-${tick}-${index}`} style={[styles.axisLabel, { fontFamily: Fonts.Comfortaa.Regular }]}>
                 {tick}
               </Text>
             ))}
           </View>
           <View style={[styles.barsContainer, { justifyContent: numBars > 1 ? "space-around" : "center" }]}>
             {sortedData.map((day, index) => {
-              if (day.totalClicks === 0) return null; // Bỏ qua ngày không có click
+              if (day.totalClicks === 0) return null;
               const barHeight = (day.totalClicks / maxClicks) * chartHeight;
               return (
-                <View key={index} style={styles.barWrapper}>
+                <View key={`${day.day}-${index}`} style={styles.barWrapper}>
                   <Text style={[styles.barLabel, { fontFamily: Fonts.Comfortaa.Regular }]}>
                     {day.totalClicks}
                   </Text>
@@ -259,7 +254,6 @@ export default function DataScreen() {
     );
   };
 
-  // Hiển thị khi đang load hoặc font chưa sẵn sàng
   if (!fontsLoaded || isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -268,21 +262,19 @@ export default function DataScreen() {
     );
   }
 
-  // Hiển thị khi có lỗi
   if (error) {
     return (
       <View style={styles.container}>
         <Text style={[styles.subtitle, { fontFamily: Fonts.Comfortaa.Medium, color: Colors.light.error }]}>
           {error}
         </Text>
-        <TouchableOpacity style={styles.replyButton} onPress={fetchClicks}>
+        <TouchableOpacity style={styles.replyButton} onPress={fetchSnackPlaceData}> 
           <Text style={[styles.replyButtonText, { fontFamily: Fonts.Comfortaa.Medium }]}>Thử lại</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Dữ liệu thẻ thống kê
   const cardData: CardData[] = [
     { value: stats.averageRating.toFixed(1), label: "Đánh giá sao" },
     { value: stats.numOfComments, label: "Lượt đánh giá" },
@@ -299,7 +291,7 @@ export default function DataScreen() {
       <Text style={[styles.subtitle, { fontFamily: Fonts.Baloo2.Bold }]}>Số liệu hôm nay</Text>
       <View style={styles.cardsContainer}>
         {cardData.map((item, index) => (
-          <View key={index} style={styles.card}>
+          <View key={item.label} style={styles.card}> 
             <View style={styles.headerContainer}>
               {item.label === "Đánh giá sao" ? (
                 <Ionicons name="star" size={28} color={Colors.light.icon} style={styles.icon} />

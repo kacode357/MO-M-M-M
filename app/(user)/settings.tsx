@@ -1,3 +1,4 @@
+// app/(screen)/settings.tsx
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -5,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native'; // Thêm View
 
 const Settings = () => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -17,7 +18,7 @@ const Settings = () => {
       await AsyncStorage.clear();
     };
     clearAsyncStorage();
-    router.push('/(screen)/welcome'); 
+    router.push('/(screen)/welcome');
   };
 
   const styles = StyleSheet.create({
@@ -54,7 +55,7 @@ const Settings = () => {
     logoutText: {
       fontFamily: Fonts.Comfortaa.Medium,
       fontSize: 16,
-      color: Colors[colorScheme].primaryText || "#FF0000", 
+      color: Colors[colorScheme].primaryText || "#FF0000",
       textAlign: "center",
       paddingVertical: 20,
     },
@@ -63,14 +64,14 @@ const Settings = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.container}>
       <Text style={styles.sectionTitle}>Tài khoản</Text>
-      <TouchableOpacity 
-        style={styles.row} 
+      <TouchableOpacity
+        style={styles.row}
         onPress={() => router.push('/(user)/personal-info')}
       >
         <Text style={styles.rowText}>Thông tin cá nhân</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.row}
         onPress={() => router.push('/(user)/change-password')}
       >
@@ -82,14 +83,21 @@ const Settings = () => {
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
 
       </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Tài khoản / Thẻ Ngân hàng</Text>
+     
+      <TouchableOpacity
+        style={styles.row}
+        onPress={() => router.push('/(payment)/payment-history')} 
+      >
+        <Text style={styles.rowText}>Lịch sử giao dịch</Text> 
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Cài đặt</Text>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Cài đặt Chat</Text>
+     <TouchableOpacity
+        style={styles.row}
+        onPress={() => router.push('/(model-ai)/ai-create-chatbot')} 
+      >
+        <Text style={styles.rowText}>Cài đặt chat</Text> 
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.row}>
@@ -104,7 +112,7 @@ const Settings = () => {
         <Text style={styles.rowText}>Ngôn ngữ</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
-      
+
 
       <TouchableOpacity onPress={handleLogout}>
         <Text style={styles.logoutText}>Đăng xuất</Text>

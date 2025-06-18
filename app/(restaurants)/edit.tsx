@@ -301,7 +301,7 @@ const EditRestaurant = () => {
       };
 
       await updateSnackPlace(data);
-      Alert.alert('Thành công', 'Cập nhật quán ăn thành công!');
+    
       router.push('/(tabs)/restaurants');
     } catch (error: any) {
       Alert.alert('Lỗi', 'Cập nhật quán ăn thất bại.');
