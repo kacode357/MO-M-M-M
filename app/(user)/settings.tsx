@@ -95,7 +95,7 @@ const Settings = () => {
       <Text style={styles.sectionTitle}>Cài đặt</Text>
      <TouchableOpacity
         style={styles.row}
-        onPress={() => router.push('/(model-ai)/ai-create-chatbot')} 
+      
       >
         <Text style={styles.rowText}>Cài đặt chat</Text> 
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />

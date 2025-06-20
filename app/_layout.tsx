@@ -11,10 +11,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar"; // Import StatusBar
 import { useEffect } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
-
 import "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+
 SplashScreen.preventAutoHideAsync();
 
 const styles = StyleSheet.create({
@@ -111,16 +111,13 @@ export default function RootLayout() {
     { name: "(restaurants)/add-dish", options: { headerShown: false } },
     { name: "(promotion)/basic-package", options: { headerShown: false } },
     { name: "(promotion)/standard-package", options: { headerShown: false } },
-    { name: "(payment)/payment-method", options: { headerShown: false } },
+     { name: "(payment)/payment-method", options: { headerShown: false } },
     { name: "(payment)/payment-qr-screen", options: { headerShown: false } },
     { name: "(payment)/payment-history", options: { headerShown: false } },
     { name: "(model-ai)/ai-create-image", options: { headerShown: false } },
     { name: "(model-ai)/ai-instruction", options: { headerShown: false } },
     { name: "(model-ai)/ai-result-image", options: { headerShown: false } },
 
-
-   
-   
     {
       name: "(user)/profile",
       options: {

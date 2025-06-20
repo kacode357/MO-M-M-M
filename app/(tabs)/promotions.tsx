@@ -8,22 +8,42 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { hasPackage } from '@/services/payment.services';
 import { searchPremiumPackage } from '@/services/premiumPackage.services';
 
+// Cập nhật interface PremiumPackage dựa trên log của bạn
 interface PremiumPackage {
     id: number;
     name: string;
     price: number;
-    descriptions: string[];
+    descriptions: string[]; // Log cho thấy descriptions là một mảng string
     status: boolean;
-    createdAt: string;
-    updatedAt: string;
+    // createdAt và updatedAt không xuất hiện trong log của bạn, nên có thể bỏ đi
+    // Nếu API có trả về, bạn có thể thêm lại: createdAt?: string; updatedAt?: string;
 }
 
+// Cập nhật interface PurchasedPackage dựa trên log của bạn
 interface PurchasedPackage {
     userId: string;
     premiumPackageId: number;
     purchaseDate: string;
     isActive: boolean;
 }
+
+// Interface cho phản hồi API searchPremiumPackage
+interface SearchPremiumPackageResponse {
+    data: {
+        pageData: PremiumPackage[];
+        pageInfo: any; // pageInfo là một Object, bạn có thể định nghĩa chi tiết nếu cần
+    };
+    message: string;
+    status: number;
+}
+
+// Interface cho phản hồi API hasPackage
+interface HasPackageResponse {
+    data: PurchasedPackage[]; // Giả định trả về một mảng các gói đã mua
+    message: string;
+    status: number;
+}
+
 
 const Promotions = () => {
     const [fontsLoaded] = useFonts(getFontMap());
@@ -36,25 +56,47 @@ const Promotions = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const [premiumPackagesResponse, purchasedPackagesResponse] = await Promise.all([
+            const [premiumPackagesResponse, purchasedPackagesResponse] = await Promise.allSettled([
                 searchPremiumPackage({
                     pageNum: 1,
                     pageSize: 10,
                     searchKeyword: '',
                     status: true,
-                }),
-                hasPackage(),
+                }) as Promise<SearchPremiumPackageResponse>,
+                hasPackage() as Promise<HasPackageResponse>,
             ]);
 
-            const rawPackages = premiumPackagesResponse.data.pageData;
-            setPackages(rawPackages);
+            // --- Xử lý searchPremiumPackage ---
+            if (premiumPackagesResponse.status === 'fulfilled') {
+                if (premiumPackagesResponse.value.status === 200 && premiumPackagesResponse.value.data && premiumPackagesResponse.value.data.pageData) {
+                    console.log("Dữ liệu chi tiết gói Premium (pageData):", premiumPackagesResponse.value.data.pageData);
+                    setPackages(premiumPackagesResponse.value.data.pageData);
+                } else {
+                    console.warn("API searchPremiumPackage trả về dữ liệu rỗng hoặc không đúng định dạng:", premiumPackagesResponse.value);
+                    setPackages([]);
+                }
+            } else {
+                console.error("API searchPremiumPackage bị từ chối:", premiumPackagesResponse.reason);
+                setError("Không thể tải danh sách gói dịch vụ.");
+            }
 
-            const userPurchasedPackages = purchasedPackagesResponse.data;
-            setPurchasedPackages(userPurchasedPackages);
+            // --- Xử lý hasPackage ---
+            if (purchasedPackagesResponse.status === 'fulfilled') {
+                if (purchasedPackagesResponse.value.status === 200 && purchasedPackagesResponse.value.data) {
+                    console.log("Dữ liệu chi tiết gói đã mua (data):", purchasedPackagesResponse.value.data);
+                    setPurchasedPackages(purchasedPackagesResponse.value.data);
+                } else {
+                    console.warn("API hasPackage trả về dữ liệu gói đã mua rỗng hoặc không đúng định dạng:", purchasedPackagesResponse.value);
+                    setPurchasedPackages([]);
+                }
+            } else {
+                console.error("API hasPackage bị từ chối:", purchasedPackagesResponse.reason);
+                setError("Không thể kiểm tra trạng thái gói đã mua.");
+            }
 
         } catch (err) {
-            console.error("Lỗi khi tìm kiếm gói dịch vụ hoặc kiểm tra gói đã mua:", err);
-            setError("Không thể tải các gói dịch vụ hoặc kiểm tra trạng thái gói. Vui lòng thử lại sau.");
+            console.error("Lỗi tổng quát khi fetch gói dịch vụ:", err);
+            setError("Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.");
         } finally {
             setIsLoading(false);
         }
@@ -64,29 +106,74 @@ const Promotions = () => {
         fetchPremiumPackages();
     }, [fetchPremiumPackages]);
 
-    const handleLearnMore = (packageType: string, packageId: number) => {
-        if (packageType.includes('Cơ Bản')) {
-            router.push('/(model-ai)/ai-create-image'); // Chuyển hướng đến trang tạo ảnh AI
-        } else if (packageType.includes('Tiêu Chuẩn')) {
-            router.push({
-                pathname: '/(promotion)/standard-package',
-                params: { id: packageId.toString() }
-            });
-        }
-        // Thêm các điều kiện khác nếu có thêm gói dịch vụ
-    };
-
     // Hàm kiểm tra xem gói đã được mua và kích hoạt chưa
-    const isPackageActive = (packageId: number) => {
+    const isPackageActive = useCallback((packageId: number) => {
+        // Đảm bảo purchasedPackages đã được tải và không rỗng
+        if (!purchasedPackages || purchasedPackages.length === 0) {
+            return false;
+        }
+        // Duyệt qua mảng các gói đã mua để tìm gói có premiumPackageId trùng khớp và isActive là true
         return purchasedPackages.some(
             (pkg) => pkg.premiumPackageId === packageId && pkg.isActive
         );
-    };
+    }, [purchasedPackages]); // Thêm purchasedPackages vào dependencies để re-render khi dữ liệu thay đổi
+
+    const handleLearnMore = useCallback((pkg: PremiumPackage) => {
+        if (!router) {
+            console.warn("Expo Router instance not available.");
+            return;
+        }
+
+        const active = isPackageActive(pkg.id); // Lấy trạng thái hoạt động của gói
+
+        if (active) {
+            // Gói đã được mua và đang hoạt động, chuyển đến trang tính năng/sử dụng
+            console.log(`Gói "${pkg.name}" (ID: ${pkg.id}) đã được kích hoạt. Chuyển hướng đến trang sử dụng.`);
+            if (pkg.name.includes('Cơ Bản')) {
+                router.push({
+                    pathname: '/(model-ai)/ai-create-image',
+                    params: { id: pkg.id.toString(), packageName: pkg.name } 
+                });
+            } else if (pkg.name.includes('Tiêu Chuẩn')) {
+                router.push({
+                    pathname: '/(promotion)/standard-package',
+                    params: { id: pkg.id.toString(), packageName: pkg.name }
+                });
+            } else {
+                console.warn(`Gói "${pkg.name}" đã được kích hoạt nhưng không có đường dẫn 'sử dụng ngay' cụ thể.`);
+                // Fallback nếu không có đường dẫn cụ thể, có thể chuyển về trang chủ hoặc trang chi tiết chung
+                // router.push({
+                //     pathname: '/(promotion)/package-detail',
+                //     params: { id: pkg.id.toString(), packageName: pkg.name }
+                // });
+            }
+        } else {
+            // Gói chưa được mua hoặc chưa kích hoạt, chuyển đến trang mua/chi tiết
+            console.log(`Gói "${pkg.name}" (ID: ${pkg.id}) chưa được kích hoạt. Chuyển hướng đến trang tìm hiểu thêm.`);
+            if (pkg.name.includes('Cơ Bản')) {
+                router.push({
+                    pathname: '/(promotion)/basic-package',
+                    params: { id: pkg.id.toString(), packageName: pkg.name }
+                });
+            } else if (pkg.name.includes('Tiêu Chuẩn')) {
+                router.push({
+                    pathname: '/(promotion)/standard-package',
+                    params: { id: pkg.id.toString(), packageName: pkg.name }
+                });
+            } else {
+                // router.push({
+                //     pathname: '/(promotion)/package-detail', // Trang chi tiết chung nếu không khớp
+                //     params: { id: pkg.id.toString(), packageName: pkg.name }
+                // });
+            }
+        }
+    }, [isPackageActive]); // Thêm isPackageActive vào dependencies
 
     if (!fontsLoaded || isLoading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={Colors.light.primaryText} />
+                <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>Đang tải dữ liệu...</Text>
             </View>
         );
     }
@@ -105,7 +192,10 @@ const Promotions = () => {
     if (packages.length === 0) {
         return (
             <View style={styles.noDataContainer}>
-                <Text style={[styles.noDataText, { fontFamily: Fonts.Comfortaa.Regular }]}>Hiện chưa có gói dịch vụ nào.</Text>
+                <Text style={[styles.noDataText, { fontFamily: Fonts.Comfortaa.Regular }]}>Hiện chưa có gói dịch vụ nào để hiển thị.</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={fetchPremiumPackages}>
+                    <Text style={[styles.learnMoreText, { fontFamily: Fonts.Comfortaa.Medium }]}>Tải lại</Text>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -128,9 +218,19 @@ const Promotions = () => {
                             <Text style={[styles.packagePrice, { fontFamily: Fonts.Baloo2.Bold }]}>
                                 Giá: {pkg.price.toLocaleString('vi-VN')} VNĐ
                             </Text>
+                            {/* Hiển thị descriptions từ log */}
+                            {pkg.descriptions && pkg.descriptions.length > 0 && (
+                                <View style={styles.descriptionContainer}>
+                                    {pkg.descriptions.map((desc, idx) => (
+                                        <Text key={idx} style={[styles.packageDescription, { fontFamily: Fonts.Comfortaa.Regular }]}>
+                                            • {desc}
+                                        </Text>
+                                    ))}
+                                </View>
+                            )}
                             <TouchableOpacity
                                 style={styles.learnMoreButton}
-                                onPress={() => handleLearnMore(pkg.name, pkg.id)}
+                                onPress={() => handleLearnMore(pkg)}
                             >
                                 <Text style={[styles.learnMoreText, { fontFamily: Fonts.Comfortaa.Medium }]}>
                                     {isActivePackage ? 'Sử dụng ngay' : 'Tìm hiểu thêm'}
@@ -161,6 +261,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: Colors.light.background,
+    },
+    loadingText: {
+        fontSize: 16,
+        color: Colors.light.blackText,
+        marginTop: 10,
     },
     errorContainer: {
         flex: 1,
@@ -230,7 +335,11 @@ const styles = StyleSheet.create({
     packageDescription: {
         fontSize: 14,
         color: Colors.light.blackText,
-        marginVertical: 10,
+        // marginVertical: 2, // Điều chỉnh khoảng cách giữa các mô tả
+    },
+    descriptionContainer: {
+        marginTop: 10, // Khoảng cách giữa giá và mô tả
+        marginBottom: 10,
     },
     packagePrice: {
         fontSize: 18,

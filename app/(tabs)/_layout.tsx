@@ -5,7 +5,6 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Ionicons from '@expo/vector-icons/Ionicons'; // Import Ionicons cho icon help
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -18,6 +17,7 @@ export default function TabLayout() {
       <View style={styles.tabContainer}>
         <Tabs
           screenOptions={{
+            // ... (các screenOptions khác giữ nguyên)
             tabBarActiveTintColor: Colors[colorScheme].tabIconSelected,
             tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
             headerShown: false,
@@ -89,20 +89,21 @@ export default function TabLayout() {
               ),
             }}
           />
-          {/* Thêm Tab.Screen cho Help */}
+          {/* BẮT ĐẦU: Thay đổi biểu tượng cho tab Trợ giúp */}
           <Tabs.Screen
-            name="help" // Tên của file màn hình sẽ là help.tsx
+            name="help"
             options={{
-              title: 'Trợ Giúp',
+              title: 'Trợ giúp',
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons // Sử dụng Ionicons hoặc thư viện icon khác phù hợp
-                  name={focused ? 'help-circle' : 'help-circle-outline'}
-                  size={28} // Có thể điều chỉnh kích thước
+                <AntDesign
+                  name="customerservice" // <-- ĐÃ THAY ĐỔI ICON Ở ĐÂY
+                  size={26}
                   color={focused ? Colors[colorScheme].tabIconSelected : Colors[colorScheme].tabIconDefault}
                 />
               ),
             }}
           />
+          {/* KẾT THÚC: Thay đổi biểu tượng cho tab Trợ giúp */}
           <Tabs.Screen
             name="user"
             options={{

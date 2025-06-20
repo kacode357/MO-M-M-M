@@ -184,7 +184,7 @@ const Restaurants = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Quán ăn của bạn</Text>
+        <Text style={styles.title}>Quán Ăn</Text>
         {!loading && !error && !restaurant && (
           <TouchableOpacity style={styles.createButton} onPress={handleCreateRestaurant}>
             <Ionicons

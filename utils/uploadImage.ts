@@ -53,7 +53,7 @@ const uploadImage = async (
     const imageUrl = response.data.secure_url;
     if (imageUrl) {
       setImageUrl(imageUrl);
-    
+      Alert.alert('Thành công', 'Tải ảnh lên thành công!');
       return { imageUri: uri, imageUrl };
     }
 

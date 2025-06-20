@@ -2,7 +2,7 @@
   "expo": {
     "name": "M Merchant",
     "slug": "m-merchant",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo-app.png",
     "scheme": "mmerchant",
@@ -22,7 +22,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.kaluu.mmerchant"
+      "package": "com.kaluu.mmerchant",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_MEDIA_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +35,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -38,7 +44,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "9552696f-9797-4a04-beba-bf4ccc6c8ffb"
+        "projectId": "67ca7c94-eb8a-4851-9152-772a242b38ad"
       }
     }
   }

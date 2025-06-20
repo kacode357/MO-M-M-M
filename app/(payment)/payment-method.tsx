@@ -39,7 +39,6 @@ const PaymentMethodScreen = () => {
 
             const response = await createPayment(paymentIdNumber);
             console.log(`Tạo thanh toán qua ${method} thành công:`, response);
-            console.error(`Tạo thanh toán `, response.data.paymentCode);
             // Kiểm tra và đảm bảo response.data có paymentCode
             if (response.status === 200 && response.data?.qrCodeUrl && response.data?.paymentCode) {
                 router.push({
