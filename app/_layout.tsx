@@ -96,7 +96,7 @@ export default function RootLayout() {
   const screenOptions = [
     { name: "(tabs)", options: { headerShown: false } },
     { name: "(screen)/welcome", options: { headerShown: false } },
-   
+
     { name: "(auth)/signin-merchant", options: commonHeaderOptions },
     { name: "(auth)/signup", options: { headerShown: false } },
     { name: "(auth)/forgot-password", options: commonHeaderOptions },
@@ -104,20 +104,23 @@ export default function RootLayout() {
     { name: "(restaurants)/create", options: { headerShown: false } },
     { name: "(restaurants)/edit", options: { headerShown: false } },
     { name: "(restaurants)/business-model", options: { headerShown: false } },
-    { name: "(restaurants)/business-model-update", options: { headerShown: false } },
+    {
+      name: "(restaurants)/business-model-update",
+      options: { headerShown: false },
+    },
     { name: "(restaurants)/flavor", options: { headerShown: false } },
     { name: "(restaurants)/flavor-update", options: { headerShown: false } },
     { name: "(restaurants)/editDish", options: { headerShown: false } },
     { name: "(restaurants)/add-dish", options: { headerShown: false } },
     { name: "(promotion)/basic-package", options: { headerShown: false } },
     { name: "(promotion)/standard-package", options: { headerShown: false } },
-     { name: "(payment)/payment-method", options: { headerShown: false } },
+    { name: "(payment)/payment-method", options: { headerShown: false } },
     { name: "(payment)/payment-qr-screen", options: { headerShown: false } },
     { name: "(payment)/payment-history", options: { headerShown: false } },
     { name: "(model-ai)/ai-create-image", options: { headerShown: false } },
     { name: "(model-ai)/ai-instruction", options: { headerShown: false } },
-    { name: "(model-ai)/ai-result-image", options: { headerShown: false } },
-
+    { name: "(model-ai)/ai-", options: { headerShown: false } },
+    { name: "(screen)/comment-reply-screen", options: { headerShown: false } },
     {
       name: "(user)/profile",
       options: {

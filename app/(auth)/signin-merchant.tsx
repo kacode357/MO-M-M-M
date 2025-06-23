@@ -60,8 +60,13 @@ const SigninMerChant = () => {
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('refreshToken', refreshToken);
       const userResponse = await GetCurrentUserApi();
-      const { premium, id, userName: userNameResponse, email, fullname, roles } = userResponse.data;
-      console.log('User response:', roles);
+      const {  id, userName: userNameResponse, email, fullname, roles } = userResponse.data;
+      const packageNames = userResponse.data.userPackages.map(
+                        (item: { packageName: string }) => item.packageName
+                    );
+                    const jsonValue = JSON.stringify(packageNames);
+                    await AsyncStorage.setItem("packageNames", jsonValue);
+      
       // Check first role in roles array
       if (roles[0] !== 'Merchant') {
         setModalConfig({
