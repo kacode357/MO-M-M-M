@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback } from 'react';
 import { ActivityIndicator, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-// === TAO CẬP NHẬT INTERFACE THEO DATA THẬT ===
+// Interfaces (không đổi)
 interface Reply {
   replyId: string;
   reviewId: string | null;
@@ -39,8 +39,16 @@ interface ReviewWithReplies {
   replies: Reply[];
 }
 
-// === TAO TẠO COMPONENT CON ĐỂ HIỂN THỊ REPLY ===
-// Component này có thể tự gọi lại chính nó để hiển thị các reply lồng nhau
+// Helper format ngày (không đổi)
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+    }).format(date);
+};
+
+// Component con ReplyItem (không đổi)
 const ReplyItem = ({ reply, onReplyPress, level = 0 }: { reply: Reply; onReplyPress: (reviewId: string, parentReplyId: string) => void; level?: number }) => (
     <View style={{ marginLeft: level * 20, marginTop: 10 }}>
         <View style={styles.userInfo}>
@@ -52,26 +60,16 @@ const ReplyItem = ({ reply, onReplyPress, level = 0 }: { reply: Reply; onReplyPr
         </View>
         <View style={styles.replyActions}>
             <ThemedText style={styles.date}>{formatDate(reply.createdAt)}</ThemedText>
+            {/* LOGIC ĐÚNG: Nút này gọi hàm onReplyPress với cả reviewId và replyId (parentReplyId cho reply mới) */}
             <TouchableOpacity onPress={() => onReplyPress(reply.reviewId!, reply.replyId)}>
                 <ThemedText style={styles.replyLink}>Trả lời</ThemedText>
             </TouchableOpacity>
         </View>
-
-        {/* Đệ quy: Render các reply con */}
         {reply.replies?.map(childReply => (
             <ReplyItem key={childReply.replyId} reply={childReply} onReplyPress={onReplyPress} level={level + 1} />
         ))}
     </View>
 );
-
-// Helper để format ngày tháng (không đổi)
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('vi-VN', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit',
-    }).format(date);
-};
 
 
 export default function CommentReplyScreen() {
@@ -80,13 +78,11 @@ export default function CommentReplyScreen() {
     const [error, setError] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-    // State cho modal
     const [isModalVisible, setModalVisible] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
     const [replyingTo, setReplyingTo] = useState<{ reviewId: string; parentReplyId: string | null } | null>(null);
     
-    // Lấy userId khi vào màn
     useEffect(() => {
         const fetchUser = async () => {
             const userId = await AsyncStorage.getItem('user_id');
@@ -95,7 +91,6 @@ export default function CommentReplyScreen() {
         fetchUser();
     }, []);
 
-    // Lấy data reviews và replies
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -117,28 +112,44 @@ export default function CommentReplyScreen() {
         fetchData();
     }, [fetchData]);
 
+    // LOGIC ĐÚNG: Hàm này nhận tham số và gán giá trị mặc định `null` cho parentReplyId
     const openReplyModal = (reviewId: string, parentReplyId: string | null = null) => {
         setReplyingTo({ reviewId, parentReplyId });
         setModalVisible(true);
     };
 
-    const handleSendReply = async () => {
+    // LOGIC ĐÚNG: Hàm này gửi payload đi với cấu trúc chính xác
+   const handleSendReply = async () => {
         if (!replyContent.trim() || !replyingTo || !currentUserId) return;
         
         setSubmitting(true);
         try {
-            await createReply({
+            // === TAO THÊM VÀO ĐÂY ===
+
+            // 1. Tạo object payload để dễ quản lý và log
+            const payload = {
                 reviewId: replyingTo.reviewId,
                 parentReplyId: replyingTo.parentReplyId,
-                comment: replyContent,
+                content: replyContent,
                 userId: currentUserId,
-            });
-            // Sau khi gửi thành công, tải lại toàn bộ data để cập nhật
+            };
+
+            // 2. In payload ra console để mày xem
+            console.log("Chuẩn bị gửi payload lên API /api/Reply/create:", JSON.stringify(payload, null, 2));
+            
+            // 3. Gửi payload đi
+            await createReply(payload);
+            
+            // === KẾT THÚC PHẦN THÊM VÀO ===
+
+            // Tải lại data để cập nhật UI
             await fetchData();
             setModalVisible(false);
             setReplyContent('');
         } catch (e) {
             alert('Gửi phản hồi thất bại!');
+            // In lỗi ra console để debug nếu cần
+            console.error("Lỗi khi gửi reply:", e);
         } finally {
             setSubmitting(false);
         }
@@ -158,7 +169,6 @@ export default function CommentReplyScreen() {
             </View>
             
             <View style={styles.ratingsContainer}>
-                {/* SỬA LỖI KEY: Thêm item.reviewId để key là duy nhất */}
                 <View style={styles.ratingRow}><ThemedText style={styles.ratingLabel}>Hương vị:</ThemedText><View style={styles.starsContainer}>{[...Array(5)].map((_, i) => (<Ionicons key={`taste-${item.reviewId}-${i}`} name={i < item.taste ? 'star' : 'star-outline'} size={16} color={Colors.light.primaryText}/>))}</View></View>
                 <View style={styles.ratingRow}><ThemedText style={styles.ratingLabel}>Giá cả:</ThemedText><View style={styles.starsContainer}>{[...Array(5)].map((_, i) => (<Ionicons key={`price-${item.reviewId}-${i}`} name={i < item.price ? 'star' : 'star-outline'} size={16} color={Colors.light.primaryText}/>))}</View></View>
                 <View style={styles.ratingRow}><ThemedText style={styles.ratingLabel}>Vệ sinh:</ThemedText><View style={styles.starsContainer}>{[...Array(5)].map((_, i) => (<Ionicons key={`sanitary-${item.reviewId}-${i}`} name={i < item.sanitary ? 'star' : 'star-outline'} size={16} color={Colors.light.primaryText}/>))}</View></View>
@@ -166,14 +176,11 @@ export default function CommentReplyScreen() {
                 <View style={styles.ratingRow}><ThemedText style={styles.ratingLabel}>Tiện lợi:</ThemedText><View style={styles.starsContainer}>{[...Array(5)].map((_, i) => (<Ionicons key={`convenience-${item.reviewId}-${i}`} name={i < item.convenience ? 'star' : 'star-outline'} size={16} color={Colors.light.primaryText}/>))}</View></View>
             </View>
 
-            {item.image && item.image !== 'string' && (
-                <Image source={{ uri: item.image }} style={styles.reviewImage} />
-            )}
+            {item.image && item.image !== 'string' && ( <Image source={{ uri: item.image }} style={styles.reviewImage} /> )}
 
             <View style={styles.mainReplyContainer}>
-                {/* Hiển thị tất cả các reply gốc */}
                 {item.replies?.map(reply => (
-                    <ReplyItem key={reply.replyId} reply={reply} onReplyPress={(reviewId, parentReplyId) => openReplyModal(reviewId, parentReplyId)} />
+                    <ReplyItem key={reply.replyId} reply={reply} onReplyPress={openReplyModal} />
                 ))}
             </View>
 
@@ -182,6 +189,7 @@ export default function CommentReplyScreen() {
                     <Ionicons name='thumbs-up' size={16} color={Colors.light.icon}/>
                     <ThemedText style={styles.recommendText}>{item.recommendCount} lượt khuyên dùng</ThemedText>
                 </View>
+                 {/* LOGIC ĐÚNG: Nút này gọi hàm openReplyModal chỉ với reviewId, parentReplyId sẽ là null */}
                 <TouchableOpacity style={styles.replyButton} onPress={() => openReplyModal(item.reviewId)}>
                     <Ionicons name="chatbox-ellipses-outline" size={16} color={Colors.light.whiteText} />
                     <Text style={styles.replyButtonText}>Trả lời</Text>
@@ -199,27 +207,20 @@ export default function CommentReplyScreen() {
                 <ThemedText style={styles.headerTitle}>Quản lý bình luận</ThemedText>
             </View>
 
-            {loading ? (
-                <ActivityIndicator size="large" color={Colors.light.primaryText} style={{ marginTop: 20 }}/>
-            ) : error ? (
-                <ThemedText style={styles.errorText}>{error}</ThemedText>
+            {loading ? ( <ActivityIndicator size="large" color={Colors.light.primaryText} style={{ marginTop: 20 }}/>
+            ) : error ? ( <ThemedText style={styles.errorText}>{error}</ThemedText>
             ) : (
                 <FlatList
                     data={reviews}
                     renderItem={renderReviewItem}
-                    keyExtractor={item => item.reviewId} // Sửa key extractor
+                    keyExtractor={item => item.reviewId}
                     contentContainerStyle={styles.listContainer}
                     onRefresh={fetchData}
                     refreshing={loading}
                 />
             )}
 
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={isModalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
+            <Modal animationType="slide" transparent={true} visible={isModalVisible} onRequestClose={() => setModalVisible(false)}>
                 <View style={styles.modalContainer}>
                     <View style={styles.modalView}>
                         <ThemedText style={styles.modalTitle}>Viết phản hồi</ThemedText>
@@ -245,8 +246,7 @@ export default function CommentReplyScreen() {
     );
 }
 
-
-// Tao cập nhật một ít style và thêm style cho modal
+// Styles (không đổi)
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: { flexDirection: 'row', alignItems: 'center', padding: 20, marginTop: 40, backgroundColor: Colors.light.whiteText },
@@ -275,7 +275,6 @@ const styles = StyleSheet.create({
     mainReplyContainer: { borderTopWidth: 1, borderTopColor: '#eee', marginTop: 10, paddingTop: 5 },
     replyActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
     replyLink: { color: Colors.light.tint, fontFamily: Fonts.Comfortaa.Bold, fontSize: 13 },
-    // Styles cho Modal
     modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
     modalView: { width: '90%', margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 25, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
     modalTitle: { fontSize: 20, fontFamily: Fonts.Baloo2.Bold, marginBottom: 15 },

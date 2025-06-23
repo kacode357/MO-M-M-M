@@ -7,7 +7,7 @@ const getAllReviewsAndReplies = async () => {
 const createReply = async (data: {
   reviewId: string;
   parentReplyId?: string | null; // Sửa từ string | undefined thành string | null
-  comment: string;
+  content: string;
   userId: string;
 }) => {
     const response = await skipNotiAxiosInstance.post('/api/Reply/create', data);
