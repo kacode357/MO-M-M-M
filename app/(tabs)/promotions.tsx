@@ -126,26 +126,22 @@ const Promotions = () => {
 
         const active = isPackageActive(pkg.id); // Lấy trạng thái hoạt động của gói
 
+        // Nếu gói là "Tiêu Chuẩn" và đã kích hoạt, không chuyển hướng
+        if (active && pkg.name.includes('Tiêu Chuẩn')) {
+            console.log(`Gói "${pkg.name}" (ID: ${pkg.id}) đã được kích hoạt. Không chuyển hướng.`);
+            return;
+        }
+
         if (active) {
             // Gói đã được mua và đang hoạt động, chuyển đến trang tính năng/sử dụng
             console.log(`Gói "${pkg.name}" (ID: ${pkg.id}) đã được kích hoạt. Chuyển hướng đến trang sử dụng.`);
             if (pkg.name.includes('Cơ Bản')) {
                 router.push({
                     pathname: '/(model-ai)/ai-create-image',
-                    params: { id: pkg.id.toString(), packageName: pkg.name } 
-                });
-            } else if (pkg.name.includes('Tiêu Chuẩn')) {
-                router.push({
-                    pathname: '/(promotion)/standard-package',
-                    params: { id: pkg.id.toString(), packageName: pkg.name }
+                    params: { id: pkg.id.toString(), packageName: pkg.name },
                 });
             } else {
                 console.warn(`Gói "${pkg.name}" đã được kích hoạt nhưng không có đường dẫn 'sử dụng ngay' cụ thể.`);
-                // Fallback nếu không có đường dẫn cụ thể, có thể chuyển về trang chủ hoặc trang chi tiết chung
-                // router.push({
-                //     pathname: '/(promotion)/package-detail',
-                //     params: { id: pkg.id.toString(), packageName: pkg.name }
-                // });
             }
         } else {
             // Gói chưa được mua hoặc chưa kích hoạt, chuyển đến trang mua/chi tiết
@@ -153,22 +149,16 @@ const Promotions = () => {
             if (pkg.name.includes('Cơ Bản')) {
                 router.push({
                     pathname: '/(promotion)/basic-package',
-                    params: { id: pkg.id.toString(), packageName: pkg.name }
+                    params: { id: pkg.id.toString(), packageName: pkg.name },
                 });
             } else if (pkg.name.includes('Tiêu Chuẩn')) {
                 router.push({
                     pathname: '/(promotion)/standard-package',
-                    params: { id: pkg.id.toString(), packageName: pkg.name }
+                    params: { id: pkg.id.toString(), packageName: pkg.name },
                 });
-            } else {
-                // router.push({
-                //     pathname: '/(promotion)/package-detail', // Trang chi tiết chung nếu không khớp
-                //     params: { id: pkg.id.toString(), packageName: pkg.name }
-                // });
             }
         }
-    }, [isPackageActive]); // Thêm isPackageActive vào dependencies
-
+    }, [isPackageActive]);
     if (!fontsLoaded || isLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -210,42 +200,47 @@ const Promotions = () => {
             </View>
 
             {packages.map((pkg) => {
-                const isActivePackage = isPackageActive(pkg.id);
-                return (
-                    <View key={pkg.id} style={styles.packageCard}>
-                        <View style={styles.packageInfo}>
-                            <Text style={[styles.packageTitle, { fontFamily: Fonts.Baloo2.Bold }]}>{pkg.name}</Text>
-                            <Text style={[styles.packagePrice, { fontFamily: Fonts.Baloo2.Bold }]}>
-                                Giá: {pkg.price.toLocaleString('vi-VN')} VNĐ
-                            </Text>
-                            {/* Hiển thị descriptions từ log */}
-                            {pkg.descriptions && pkg.descriptions.length > 0 && (
-                                <View style={styles.descriptionContainer}>
-                                    {pkg.descriptions.map((desc, idx) => (
-                                        <Text key={idx} style={[styles.packageDescription, { fontFamily: Fonts.Comfortaa.Regular }]}>
-                                            • {desc}
-                                        </Text>
-                                    ))}
-                                </View>
-                            )}
-                            <TouchableOpacity
-                                style={styles.learnMoreButton}
-                                onPress={() => handleLearnMore(pkg)}
-                            >
-                                <Text style={[styles.learnMoreText, { fontFamily: Fonts.Comfortaa.Medium }]}>
-                                    {isActivePackage ? 'Sử dụng ngay' : 'Tìm hiểu thêm'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                        <Image
-                            source={{
-                                uri: 'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cmVzdGF1cmFudHxlbnwwfHwwfHx8MA%3D%3D',
-                            }}
-                            style={styles.packageImage}
-                        />
-                    </View>
-                );
-            })}
+  const isActivePackage = isPackageActive(pkg.id);
+  const isStandardAndActive = isActivePackage && pkg.name.includes('Tiêu Chuẩn');
+
+  return (
+    <View key={pkg.id} style={styles.packageCard}>
+      <View style={styles.packageInfo}>
+        <Text style={[styles.packageTitle, { fontFamily: Fonts.Baloo2.Bold }]}>{pkg.name}</Text>
+        <Text style={[styles.packagePrice, { fontFamily: Fonts.Baloo2.Bold }]}>
+          Giá: {pkg.price.toLocaleString('vi-VN')} VNĐ
+        </Text>
+        {pkg.descriptions && pkg.descriptions.length > 0 && (
+          <View style={styles.descriptionContainer}>
+            {pkg.descriptions.map((desc, idx) => (
+              <Text key={idx} style={[styles.packageDescription, { fontFamily: Fonts.Comfortaa.Regular }]}>
+                • {desc}
+              </Text>
+            ))}
+          </View>
+        )}
+        <TouchableOpacity
+          style={[
+            styles.learnMoreButton,
+            isStandardAndActive && styles.disabledButton, // Thêm style cho trạng thái disabled
+          ]}
+          onPress={() => handleLearnMore(pkg)}
+          disabled={isStandardAndActive} // Vô hiệu hóa nút nếu là gói Tiêu Chuẩn và đã kích hoạt
+        >
+          <Text style={[styles.learnMoreText, { fontFamily: Fonts.Comfortaa.Medium }]}>
+            {isStandardAndActive ? 'Đã kích hoạt' : isActivePackage ? 'Sử dụng ngay' : 'Tìm hiểu thêm'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <Image
+        source={{
+          uri: 'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cmVzdGF1cmFudHxlbnwwfHwwfHx8MA%3D%3D',
+        }}
+        style={styles.packageImage}
+      />
+    </View>
+  );
+})}
         </ScrollView>
     );
 };
@@ -262,6 +257,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.light.background,
     },
+    disabledButton: {
+    backgroundColor: Colors.light.primaryText, // Màu xám để biểu thị trạng thái vô hiệu
+  },
     loadingText: {
         fontSize: 16,
         color: Colors.light.blackText,

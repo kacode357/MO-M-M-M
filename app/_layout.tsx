@@ -119,8 +119,11 @@ export default function RootLayout() {
     { name: "(payment)/payment-history", options: { headerShown: false } },
     { name: "(model-ai)/ai-create-image", options: { headerShown: false } },
     { name: "(model-ai)/ai-instruction", options: { headerShown: false } },
+    { name: "(model-ai)/ai-result-image", options: { headerShown: false } },
     { name: "(model-ai)/ai-", options: { headerShown: false } },
     { name: "(screen)/comment-reply-screen", options: { headerShown: false } },
+    { name: "(settings)/language", options: { headerShown: false } },
+
     {
       name: "(user)/profile",
       options: {

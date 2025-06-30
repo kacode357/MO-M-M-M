@@ -133,9 +133,6 @@ const Restaurants = () => {
         <View style={styles.detailsContainer}>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
           <Text style={styles.restaurantDetails}>
-            <Text style={styles.boldLabel}>Đánh giá:</Text> {restaurant.rating} ★
-          </Text>
-          <Text style={styles.restaurantDetails}>
             <Text style={styles.boldLabel}>Địa chỉ:</Text> {restaurant.address}
           </Text>
           <Text style={styles.restaurantDetails}>

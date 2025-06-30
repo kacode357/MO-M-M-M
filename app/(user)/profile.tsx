@@ -1,4 +1,3 @@
-import DEFAULT_AVATAR from '@/assets/images/logo-app.png';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -8,22 +7,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator // Import ActivityIndicator for loading state
-  ,
-
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
+
+import DEFAULT_AVATAR from '@/assets/images/logo-app.png';
 
 interface UserInfo {
   fullName: string;
   email: string;
   photo?: string;
-  packageStatus: string; // Add packageStatus to UserInfo interface
+  packageStatus: string;
 }
 
 const UserProfile = () => {
@@ -35,40 +34,33 @@ const UserProfile = () => {
   const fetchUserInfo = useCallback(async () => {
     setIsLoading(true);
     try {
-      const user_fullname = await AsyncStorage.getItem('user_fullname');
-      const { data } = await GetCurrentUserApi();
+      const [userFullName, userDataResponse] = await Promise.all([
+        AsyncStorage.getItem('user_fullname'),
+        GetCurrentUserApi(),
+      ]);
 
-      let currentPackageStatus = 'Miễn phí'; // Default status
-
-      // Try to retrieve packageNames from AsyncStorage
+      let packageStatus = 'Miễn phí';
       const storedPackageNamesString = await AsyncStorage.getItem('packageNames');
       if (storedPackageNamesString) {
         const storedPackageNames: string[] = JSON.parse(storedPackageNamesString);
-
         if (storedPackageNames.length > 0) {
-          // If there are packages, display them
-          currentPackageStatus = storedPackageNames.join(', '); // Join package names with a comma
+          packageStatus = storedPackageNames.join(', ');
         }
       }
 
       setUserInfo({
-        fullName: user_fullname ?? data.fullName ?? 'Unknown User',
-        email: data.email,
-        photo: data.image,
-        packageStatus: currentPackageStatus, // Set the determined package status
+        fullName: userFullName ?? userDataResponse.data.fullName ?? 'Unknown User',
+        email: userDataResponse.data.email,
+        photo: userDataResponse.data.image,
+        packageStatus,
       });
     } catch (error) {
       console.error('Error fetching user info:', error);
-      // If GetCurrentUserApi fails or AsyncStorage fails, we might still want to show a fallback
-      // or redirect based on the severity of the error.
-      // For now, let's just log and set null userInfo, allowing the 'Failed to load' message.
-      setUserInfo(null); // Set userInfo to null to trigger the "Failed to load user data" message
-      // Consider redirecting to sign-in only for authentication-related errors
-      // router.replace('/(auth)/signin-merchant');
+      setUserInfo(null);
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,7 +72,9 @@ const UserProfile = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.light.primaryText} />
-        <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>Đang tải thông tin...</Text>
+        <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>
+          Đang tải thông tin...
+        </Text>
       </View>
     );
   }
@@ -88,7 +82,9 @@ const UserProfile = () => {
   if (!userInfo) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>Không thể tải dữ liệu người dùng</Text>
+        <Text style={[styles.loadingText, { fontFamily: Fonts.Comfortaa.Regular }]}>
+          Không thể tải dữ liệu người dùng
+        </Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchUserInfo}>
           <Text style={[styles.retryButtonText, { fontFamily: Fonts.Comfortaa.Medium }]}>Thử lại</Text>
         </TouchableOpacity>
@@ -116,13 +112,14 @@ const UserProfile = () => {
             >
               {userInfo.fullName}
             </Text>
-            {/* Display the determined package status */}
-            <Text style={styles.freeLabel}>{userInfo.packageStatus}</Text>
+            <Text style={styles.packageLabel}>{userInfo.packageStatus}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => router.push('/settings')}>
-          <Ionicons name="settings-outline" size={24} color={Colors[colorScheme].whiteText} />
-        </TouchableOpacity>
+        <View style={styles.settingsIconContainer}>
+          <TouchableOpacity onPress={() => router.push('/settings')}>
+            <Ionicons name="settings-outline" size={24} color={Colors[colorScheme].whiteText} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
@@ -133,8 +130,6 @@ const UserProfile = () => {
     </ScrollView>
   );
 };
-
-export default UserProfile;
 
 const styles = StyleSheet.create({
   container: {
@@ -147,15 +142,17 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     backgroundColor: Colors.light.tabBackground,
     paddingTop: 50,
-    padding: 20,
-    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   avatarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 10,
   },
   avatar: {
     width: 50,
@@ -171,9 +168,9 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   nameAndLabel: {
-    flex: 1,
     flexShrink: 1,
     justifyContent: 'center',
+    maxWidth: '70%',
   },
   fullName: {
     fontFamily: Fonts.Comfortaa.SemiBold,
@@ -182,7 +179,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     flexShrink: 1,
   },
-  freeLabel: {
+  packageLabel: {
     marginTop: 4,
     backgroundColor: '#FFE4B5',
     borderRadius: 5,
@@ -192,6 +189,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.light.text,
     alignSelf: 'flex-start',
+  },
+  settingsIconContainer: {
+    width: 40,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
   },
   sectionTitle: {
     fontFamily: Fonts.Comfortaa.Medium,
@@ -225,15 +227,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.background, // Ensure background color for consistency
+    backgroundColor: Colors.light.background,
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: Colors.light.blackText, // Use a suitable color from your Colors
+    color: Colors.light.blackText,
   },
   retryButton: {
-    backgroundColor: Colors.light.primaryText, // Use a suitable color from your Colors
+    backgroundColor: Colors.light.primaryText,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 25,
@@ -245,3 +247,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default UserProfile;
