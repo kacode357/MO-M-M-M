@@ -184,6 +184,11 @@ export default function DataScreen() {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
+      const id = await AsyncStorage.getItem('user_id');
+      if (!id) {
+        router.push("/signin-merchant");
+       
+      }
       const snackplaceResponse = await CheckCreatedSnackplaceApi();
       const currentSnackPlaceId = snackplaceResponse?.data?.snackPlaceId;
 

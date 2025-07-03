@@ -2,7 +2,7 @@
   "expo": {
     "name": "M Merchant",
     "slug": "m-merchant",
-    "version": "2.0.6",
+    "version": "2.0.7",
     "orientation": "portrait",
     "icon": "./assets/images/logo-app.png",
     "scheme": "mmerchant",
@@ -44,7 +44,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "324d29ab-9bb3-4c22-90a0-f9a07ff7f564"
+        "projectId": "8c381709-a7c2-4520-9dff-b5002c30c4b5"
       }
     }
   }

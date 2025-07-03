@@ -3,6 +3,7 @@ import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CheckCreatedSnackplaceApi } from '@/services/merchants.services';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -53,6 +54,11 @@ const Restaurants = () => {
     const fetchRestaurants = async () => {
       try {
         setLoading(true);
+        const id = await AsyncStorage.getItem('user_id');
+      if (!id) {
+        router.push("/signin-merchant");
+       
+      }
         const response = await CheckCreatedSnackplaceApi();
        
 
