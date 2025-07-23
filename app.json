@@ -22,6 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
+      "versionCode": 21,
       "package": "com.kaluu.mmerchant",
       "permissions": [
         "READ_EXTERNAL_STORAGE",
@@ -44,7 +45,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "8c381709-a7c2-4520-9dff-b5002c30c4b5"
+       
       }
     }
   }

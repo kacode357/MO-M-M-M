@@ -55,6 +55,7 @@ const Restaurants = () => {
       try {
         setLoading(true);
         const id = await AsyncStorage.getItem('user_id');
+     
       if (!id) {
         router.push("/signin-merchant");
        

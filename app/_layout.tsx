@@ -2,15 +2,27 @@ import { Colors } from "@/constants/Colors";
 import { getFontMap } from "@/constants/Fonts";
 import { getToastConfig } from "@/constants/ToastConfig";
 import { RefreshTokenApi } from "@/services/user.services";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  createAppRating,
+  getAppRatingByUserId,
+} from "@/services/apprating.services";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar"; // Import StatusBar
-import { useEffect } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef, useState } from "react";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Text,
+  Modal,
+  TextInput,
+  Pressable,
+} from "react-native";
 import "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -20,16 +32,20 @@ SplashScreen.preventAutoHideAsync();
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { height: 60, backgroundColor: "transparent", shadowOpacity: 0 },
-  headerWithTitle: { height: 60, backgroundColor: "#fff" }, // White background, removed transparent
-  headerTitle: { color: "#000", fontSize: 18, fontWeight: "600" }, // Black title text
+  headerWithTitle: { height: 60, backgroundColor: "#fff" },
+  headerTitle: { color: "#000", fontSize: 18, fontWeight: "600" },
 });
 
 export default function RootLayout() {
-  const colorScheme = "light"; // Hardcode to light mode
+  const colorScheme = "light";
   const router = useRouter();
   const [fontsLoaded, fontError] = useFonts(getFontMap());
-
-  // Get Toast configuration for light mode
+  const [hasRated, setHasRated] = useState(false);
+  const [showRatingUI, setShowRatingUI] = useState(false);
+  const [star, setStar] = useState(0);
+  const [description, setDescription] = useState("");
+  const [appType] = useState("Merchant");
+  const intervalRef = useRef<number | null>(null);
   const toastConfig = getToastConfig(colorScheme);
 
   useEffect(() => {
@@ -59,8 +75,7 @@ export default function RootLayout() {
               await AsyncStorage.setItem("refreshToken", newRefreshToken);
             }
             router.replace("/(tabs)");
-          } catch (refreshError) {
-            console.error("Token refresh error:", refreshError);
+          } catch {
             await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
             router.replace("/(screen)/welcome");
           }
@@ -68,8 +83,7 @@ export default function RootLayout() {
           await AsyncStorage.removeItem("accessToken");
           router.replace("/(screen)/welcome");
         }
-      } catch (error) {
-        console.error("Navigation error:", error);
+      } catch {
         router.replace("/(tabs)");
       } finally {
         await SplashScreen.hideAsync();
@@ -77,7 +91,51 @@ export default function RootLayout() {
     };
 
     navigateBasedOnToken();
+
+    // Check đánh giá mỗi 5s
+    intervalRef.current = setInterval(async () => {
+      if (hasRated) return;
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (!accessToken) return;
+
+      try {
+        const res = await getAppRatingByUserId();
+        const rated =
+          Array.isArray(res.data) &&
+          res.data.length > 0 &&
+          res.data[0].status === true;
+        if (!rated) {
+          setShowRatingUI(true);
+        } else {
+          setHasRated(true);
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        }
+      } catch (err) {
+        console.error("Check rating error:", err);
+      }
+    }, 300000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [fontsLoaded, fontError]);
+
+  const handleSubmitRating = async () => {
+    try {
+      if (star === 0 || !description.trim()) {
+        Toast.show({ type: "error", text1: "Chọn sao và mô tả!" });
+        return;
+      }
+
+      await createAppRating({ star, description, appType });
+      setHasRated(true);
+      setShowRatingUI(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      Toast.show({ type: "success", text1: "Cảm ơn bạn đã đánh giá!" });
+    } catch {
+      Toast.show({ type: "error", text1: "Lỗi gửi đánh giá!" });
+    }
+  };
 
   if (!fontsLoaded && !fontError) return null;
 
@@ -96,7 +154,6 @@ export default function RootLayout() {
   const screenOptions = [
     { name: "(tabs)", options: { headerShown: false } },
     { name: "(screen)/welcome", options: { headerShown: false } },
-
     { name: "(auth)/signin-merchant", options: commonHeaderOptions },
     { name: "(auth)/signup", options: { headerShown: false } },
     { name: "(auth)/forgot-password", options: commonHeaderOptions },
@@ -104,10 +161,7 @@ export default function RootLayout() {
     { name: "(restaurants)/create", options: { headerShown: false } },
     { name: "(restaurants)/edit", options: { headerShown: false } },
     { name: "(restaurants)/business-model", options: { headerShown: false } },
-    {
-      name: "(restaurants)/business-model-update",
-      options: { headerShown: false },
-    },
+    { name: "(restaurants)/business-model-update", options: { headerShown: false } },
     { name: "(restaurants)/flavor", options: { headerShown: false } },
     { name: "(restaurants)/flavor-update", options: { headerShown: false } },
     { name: "(restaurants)/editDish", options: { headerShown: false } },
@@ -123,7 +177,6 @@ export default function RootLayout() {
     { name: "(model-ai)/ai-", options: { headerShown: false } },
     { name: "(screen)/comment-reply-screen", options: { headerShown: false } },
     { name: "(settings)/language", options: { headerShown: false } },
-
     {
       name: "(user)/profile",
       options: {
@@ -199,6 +252,79 @@ export default function RootLayout() {
           ))}
         </Stack>
       </ThemeProvider>
+
+      {/* Đánh giá App */}
+      <Modal visible={showRatingUI} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.4)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 12,
+              width: "85%",
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "600", textAlign: "center", marginBottom: 10 }}>
+              Đánh giá trải nghiệm Merchant App?
+            </Text>
+
+            <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 10 }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Pressable key={s} onPress={() => setStar(s)}>
+                  <MaterialIcons
+                    name="star"
+                    size={32}
+                    color={s <= star ? "#f5c518" : "#ccc"}
+                  />
+                </Pressable>
+              ))}
+            </View>
+
+            <TextInput
+              placeholder="Ý kiến của bạn..."
+              value={description}
+              onChangeText={setDescription}
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 10,
+                marginBottom: 10,
+              }}
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <Pressable onPress={() => setShowRatingUI(false)} style={{ padding: 10 }}>
+                <Text style={{ color: "gray" }}>Đóng</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleSubmitRating}
+                style={{
+                  backgroundColor: "#000",
+                  paddingVertical: 10,
+                  paddingHorizontal: 16,
+                  borderRadius: 6,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "600" }}>
+                  Gửi đánh giá
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Toast config={toastConfig} />
     </SafeAreaView>
   );

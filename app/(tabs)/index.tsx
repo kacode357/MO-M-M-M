@@ -180,71 +180,73 @@ export default function DataScreen() {
     checkUserPackage();
   }, []);
 
-  // === TAO SỬA LẠI HÀM FETCHDATA CỦA MÀY ===
   const fetchData = useCallback(async () => {
-    try {
-      setError(null);
-      const id = await AsyncStorage.getItem('user_id');
-      if (!id) {
-        router.push("/signin-merchant");
-       
-      }
-      const snackplaceResponse = await CheckCreatedSnackplaceApi();
-      const currentSnackPlaceId = snackplaceResponse?.data?.snackPlaceId;
-
-      if (!currentSnackPlaceId) {
-        throw new Error("Không tìm thấy thông tin quán ăn của bạn.");
-      }
-      
-      // Lưu snackPlaceId vào state để dùng ở chỗ khác
-      setSnackPlaceId(currentSnackPlaceId);
-      
-      const today = new Date();
-      const startDate = new Date(new Date().setDate(today.getDate() - 5)).toLocaleDateString("en-CA");
-      const endDate = today.toLocaleDateString("en-CA");
-
-      const [statsResponse, clicksResponse] = await Promise.all([
-        getSnackPlaceStats(currentSnackPlaceId),
-        getSnackPlaceClicks(startDate, endDate) as Promise<ClicksApiResponse>,
-      ]);
-      
-      setStats(statsResponse.data);
-
-      const clicksByDate = new Map<string, number>();
-      clicksResponse.data.clicksByDayOfWeek.forEach((day: ApiClickDay) => {
-        if (day.dateGroup.length > 0) {
-          const date = new Date(day.dateGroup[0].clickedAt).toLocaleDateString("en-CA");
-          clicksByDate.set(date, day.totalClicks);
-        }
-      });
-      
-      const last6Days = Array.from({ length: 6 }).map((_, i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          return d;
-      }).reverse();
-      
-      const formattedClickData = last6Days.map(date => {
-          const dateString = date.toLocaleDateString('en-CA');
-          const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-          return {
-              day: VIETNAMESE_DAYS[dayName] || 'N/A',
-              totalClicks: clicksByDate.get(dateString) || 0,
-          };
-      });
-
-      setClickData(formattedClickData);
-
-    } catch (e: any) {
-      setError(e.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
-      setStats(null);
-      setClickData(null);
-      setSnackPlaceId(null); // Reset ID nếu lỗi
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+  try {
+    setError(null);
+    const id = await AsyncStorage.getItem('user_id');
+    console.log("User ID:", id);
+    if (!id) {
+      console.log("User ID is null, redirecting to signin-merchant");
+      router.push("/signin-merchant");
+      return;
     }
-  }, []);
+    console.log("User ID2:", id);
+    const snackplaceResponse = await CheckCreatedSnackplaceApi();
+    console.log("Snackplace Response:", snackplaceResponse);
+    const currentSnackPlaceId = snackplaceResponse?.data?.snackPlaceId;
+
+    if (!currentSnackPlaceId) {
+      throw new Error("Không tìm thấy thông tin quán ăn của bạn.");
+    }
+
+    setSnackPlaceId(currentSnackPlaceId);
+
+    const today = new Date();
+    const startDate = new Date(new Date().setDate(today.getDate() - 5)).toLocaleDateString("en-CA");
+    const endDate = today.toLocaleDateString("en-CA");
+
+    const [statsResponse, clicksResponse] = await Promise.all([
+      getSnackPlaceStats(currentSnackPlaceId),
+      getSnackPlaceClicks(startDate, endDate) as Promise<ClicksApiResponse>,
+    ]);
+
+    setStats(statsResponse.data);
+
+    const clicksByDate = new Map<string, number>();
+    clicksResponse.data.clicksByDayOfWeek.forEach((day: ApiClickDay) => {
+      if (day.dateGroup.length > 0) {
+        const date = new Date(day.dateGroup[0].clickedAt).toLocaleDateString("en-CA");
+        clicksByDate.set(date, day.totalClicks);
+      }
+    });
+
+    const last6Days = Array.from({ length: 6 }).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d;
+    }).reverse();
+
+    const formattedClickData = last6Days.map(date => {
+      const dateString = date.toLocaleDateString('en-CA');
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+      return {
+        day: VIETNAMESE_DAYS[dayName] || 'N/A',
+        totalClicks: clicksByDate.get(dateString) || 0,
+      };
+    });
+
+    setClickData(formattedClickData);
+
+  } catch (e: any) {
+    setError(e.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
+    setStats(null);
+    setClickData(null);
+    setSnackPlaceId(null);
+  } finally {
+    setIsLoading(false);
+    setIsRefreshing(false);
+  }
+}, []);
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
